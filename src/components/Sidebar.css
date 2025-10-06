@@ -1,0 +1,78 @@
+.sidebar-box{
+    width: 311px;
+    height: 1399px;
+    flex-shrink: 0;
+    border-radius: 16px;
+    border: 0.5px solid rgba(0, 0, 0, 0.20);
+    background: #FFF;
+    border-radius: 12px;
+    margin-left: 40px;
+    margin-top: 40px;
+}
+
+.buttons{
+    display: flex;
+    width: 200px;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+    margin-left: 56px;
+    margin-top: 20px;
+}
+
+.swap-button{
+    display: flex;
+    height: 40px;
+    padding: 8px;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+    border-radius: 8px;
+    border: 1px solid rgba(23, 23, 23, 0.60);
+
+}
+
+.deposit-button{
+    display: flex;
+    height: 40px;
+    padding: 8px;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+    border-radius: 8px;
+    border: 1px solid rgba(23, 23, 23, 0.60);
+
+}
+
+.s-icon{
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.s-text{
+    color: rgba(23, 23, 23, 0.60);
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.d-icon{
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.d-text{
+    color: rgba(23, 23, 23, 0.60);
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}

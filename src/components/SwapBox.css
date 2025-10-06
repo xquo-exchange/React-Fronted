@@ -1,0 +1,104 @@
+.swap-row-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 1029px;
+  background: #f5f5f5;
+  gap: 20px;
+  /* Use same left offset as .graph-box so swap aligns left and right with the graph */
+  margin-left: 447px;
+  margin-top: 40px;
+}
+
+/* Each section (send/receive box) */
+.swap-section {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #dcdcdc;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Swap icon container */
+.swap-middle {
+  background: #fff;
+  border-radius: 50%;
+  border: 2px solid #e0e0e0;
+  padding: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.swap-middle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.swap-middle:focus {
+  outline: 3px solid rgba(223, 233, 255, 0.16);
+  outline-offset: 2px;
+}
+
+.swap-icon {
+  font-size: 20px;
+  color: #000;
+}
+
+.swap-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.swap-label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.swap-amount {
+  font-size: 32px;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+}
+
+.swap-rate {
+  font-size: 13px;
+  color: #777;
+  margin-top: 6px;
+}
+
+.swap-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coin-info {
+  text-align: right;
+}
+
+.coin-symbol {
+  font-size: 18px;
+  font-weight: 500;
+  color: #111;
+  margin: 0;
+}
+
+.coin-name {
+  font-size: 13px;
+  color: #777;
+  margin: 0;
+}
+
+.coin-icon {
+  font-size: 28px;
+  color: #111;
+}

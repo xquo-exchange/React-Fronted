@@ -1,0 +1,66 @@
+.graph-box{
+    width: 1029px;
+    height: 539px;
+    flex-shrink: 0;
+    border-radius: 16px;
+    border: 0.5px solid rgba(0, 0, 0, 0.20);
+    background: #FFF;
+    border-radius: 12px;
+    margin-left: 447px;
+    margin-top: -1399px;
+}
+
+.graph-title{
+    color: #000;
+    font-family: Inter;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    margin-left: 20px;
+    margin-top: 10px;
+}
+
+
+.filter-container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+    gap: 0px;
+    margin-left: 0px;
+}
+
+
+.filter-button{
+    width: 100px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #033091;
+    color: #FFF;
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    margin-left: 20px;
+    border: none;
+    cursor: pointer;
+}
+
+.custom-datepicker{
+    width: 100px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid #CCC;
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    margin-left: 20px;
+    margin-top: 0px;
+    padding-left: 10px;
+}

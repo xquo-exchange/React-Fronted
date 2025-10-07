@@ -180,8 +180,8 @@
 }
 
 .btn-primary {
-  background: #7c3aed;
-  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 .btn-primary:hover { filter: brightness(1.1); }
 

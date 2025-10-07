@@ -1,66 +1,80 @@
-.graph-box{
-    width: 1029px;
-    height: 539px;
-    flex-shrink: 0;
-    border-radius: 16px;
-    border: 0.5px solid rgba(0, 0, 0, 0.20);
-    background: #FFF;
-    border-radius: 12px;
-    margin-left: 447px;
-    margin-top: -1399px;
+.graph-box {
+  width: 100%;
+  max-width: 1029px;
+  height: 539px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 20px;
 }
 
-.graph-title{
-    color: #000;
-    font-family: Inter;
-    font-size: 24px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: normal;
-    margin-left: 20px;
-    margin-top: 10px;
+.graph-title {
+  color: #ffffff;
+  font-family: Inter;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  margin: 0 0 20px 0;
 }
 
-
-.filter-container{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 0px;
-    gap: 0px;
-    margin-left: 0px;
+.filter-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px;
+  gap: 12px;
 }
 
-
-.filter-button{
-    width: 100px;
-    height: 40px;
-    flex-shrink: 0;
-    border-radius: 8px;
-    background: #033091;
-    color: #FFF;
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: normal;
-    margin-left: 20px;
-    border: none;
-    cursor: pointer;
+.filter-button {
+  height: 40px;
+  padding: 0 20px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #033091;
+  color: #FFF;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.custom-datepicker{
-    width: 100px;
-    height: 40px;
-    flex-shrink: 0;
-    border-radius: 8px;
-    border: 1px solid #CCC;
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
-    margin-left: 20px;
-    margin-top: 0px;
-    padding-left: 10px;
+.filter-button:hover {
+  background: #0440b8;
+  transform: translateY(-1px);
+}
+
+.custom-datepicker {
+  width: 150px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  padding-left: 10px;
+}
+
+.custom-datepicker::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.custom-datepicker:focus {
+  outline: none;
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.08);
 }

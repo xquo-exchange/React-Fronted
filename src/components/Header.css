@@ -1,11 +1,10 @@
-
-.header-box{
-    color: #000;
-    font-family: Inter;
-    font-size: 40px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: normal;
-    margin-left: 40px;
-    margin-top: 120px;
+.header-box {
+  color: #ffffff;
+  font-family: Inter;
+  font-size: 40px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  background: transparent;
+  margin-bottom: 40px;
 }

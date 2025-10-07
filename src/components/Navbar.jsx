@@ -1,26 +1,82 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Navbar.css";
+import { useWallet } from "../hooks/useWallet";
 
-const Navbar = () => {
+const Navbar = ({ onShowToast }) => {
+  const {
+    walletAddress,
+    isConnected,
+    isPhantomInstalled,
+    connecting,
+    connectWallet,
+    disconnectWallet,
+  } = useWallet();
+
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleConnect = async () => {
+    const result = await connectWallet();
+    if (result.success) {
+      onShowToast("success", "Wallet connected successfully");
+    } else {
+      if (result.error === "WALLET_NOT_INSTALLED") {
+        onShowToast(
+          "error",
+          "Phantom wallet not detected. Please install Phantom. If the problem continues, contact loremipsum@x-quo.com."
+        );
+      } else if (result.error === "USER_REJECTED_SIGNATURE") {
+        onShowToast("error", result.message);
+      } else {
+        onShowToast("error", result.message);
+      }
+    }
+  };
+
+  const handleDisconnect = async () => {
+    const result = await disconnectWallet();
+    if (result.success) {
+      onShowToast("success", "Wallet disconnected");
+      setShowDropdown(false);
+    }
+  };
+
+  const truncateAddress = (address) => {
+    if (!address) return "";
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+  };
+
   return (
     <nav className="navbar">
-      <div className="navbar-title">X-Quo</div>
-      <button className="connect-button">Connect Wallet</button>
-      <div className="navbar-user">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className="navbar-user-icon"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a8.25 8.25 0 0 1 15 0"
-          />
-        </svg>
+      <div className="navbar-left">
+        <h1 className="navbar-logo">X-QUO</h1>
+      </div>
+      <div className="navbar-right">
+        {!isConnected ? (
+          <button
+            className="wallet-button connect"
+            onClick={handleConnect}
+            disabled={connecting}
+          >
+            {connecting ? "Connecting..." : "Connect Wallet"}
+          </button>
+        ) : (
+          <div className="wallet-connected">
+            <button
+              className="wallet-button connected"
+              onClick={() => setShowDropdown(!showDropdown)}
+            >
+              <span className="wallet-indicator"></span>
+              {truncateAddress(walletAddress)}
+            </button>
+            {showDropdown && (
+              <div className="wallet-dropdown">
+                <button className="dropdown-item" onClick={handleDisconnect}>
+                  Disconnect
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   );

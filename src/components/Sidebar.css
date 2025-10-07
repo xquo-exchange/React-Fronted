@@ -1,78 +1,67 @@
-.sidebar-box{
-    width: 311px;
-    height: 1399px;
-    flex-shrink: 0;
-    border-radius: 16px;
-    border: 0.5px solid rgba(0, 0, 0, 0.20);
-    background: #FFF;
-    border-radius: 12px;
-    margin-left: 40px;
-    margin-top: 40px;
+.sidebar-box {
+  width: 311px;
+  height: fit-content;
+  min-height: 300px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 20px 0;
+  position: sticky;
+  top: 100px;
 }
 
-.buttons{
-    display: flex;
-    width: 200px;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    flex-shrink: 0;
-    margin-left: 56px;
-    margin-top: 20px;
+.buttons {
+  display: flex;
+  width: 200px;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  margin: 20px auto 0;
 }
 
-.swap-button{
-    display: flex;
-    height: 40px;
-    padding: 8px;
-    justify-content: center;
-    align-items: center;
-    align-self: stretch;
-    border-radius: 8px;
-    border: 1px solid rgba(23, 23, 23, 0.60);
-
+.swap-button,
+.deposit-button {
+  display: flex;
+  height: 40px;
+  padding: 8px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.deposit-button{
-    display: flex;
-    height: 40px;
-    padding: 8px;
-    justify-content: center;
-    align-items: center;
-    align-self: stretch;
-    border-radius: 8px;
-    border: 1px solid rgba(23, 23, 23, 0.60);
-
+.swap-button:hover,
+.deposit-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.s-icon{
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    margin-right: 10px;
+.s-icon,
+.d-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-right: 10px;
 }
 
-.s-text{
-    color: rgba(23, 23, 23, 0.60);
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
+.s-icon path,
+.d-icon path {
+  fill: rgba(255, 255, 255, 0.8);
 }
 
-.d-icon{
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    margin-right: 10px;
-}
-
-.d-text{
-    color: rgba(23, 23, 23, 0.60);
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
+.s-text,
+.d-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }

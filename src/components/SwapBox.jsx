@@ -1,8 +1,20 @@
 import React from "react";
 import "./SwapBox.css";
 import { FaBitcoin, FaEthereum, FaSyncAlt } from "react-icons/fa"; 
+import { useWallet } from '../hooks/useWallet';
 
-const SwapBox = () => {
+const SwapBox = ({ onShowToast }) => {
+  const { isConnected } = useWallet();
+
+  const handleSwap = () => {
+    if (!isConnected) {
+      onShowToast('error', 'Please connect your wallet to swap');
+      return;
+    }
+    // Swap logic will go here
+    console.log('Swap initiated');
+  };
+
   return (
       <div className="swap-row-horizontal">
         <div className="swap-section">
@@ -19,7 +31,13 @@ const SwapBox = () => {
             <FaBitcoin className="coin-icon" />
           </div>
         </div>
-        <button className="swap-middle" type="button" aria-label="Swap">
+        <button 
+          className="swap-middle" 
+          type="button" 
+          aria-label="Swap"
+          onClick={handleSwap}
+          disabled={!isConnected}
+        >
           <FaSyncAlt className="swap-icon" />
         </button>
         <div className="swap-section">
@@ -36,6 +54,9 @@ const SwapBox = () => {
             <FaEthereum className="coin-icon" />
           </div>
         </div>
+        {!isConnected && (
+          <p className="swap-warning">Connect wallet to continue</p>
+        )}
       </div>
   );
 };

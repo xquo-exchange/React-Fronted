@@ -19,16 +19,8 @@ const Navbar = ({ onShowToast }) => {
     if (result.success) {
       onShowToast("success", "Wallet connected successfully");
     } else {
-      if (result.error === "WALLET_NOT_INSTALLED") {
-        onShowToast(
-          "error",
-          "Phantom wallet not detected. Please install Phantom. If the problem continues, contact loremipsum@x-quo.com."
-        );
-      } else if (result.error === "USER_REJECTED_SIGNATURE") {
-        onShowToast("error", result.message);
-      } else {
-        onShowToast("error", result.message);
-      }
+      // Display error message from WalletContext
+      onShowToast("error", result.message);
     }
   };
 
@@ -37,6 +29,8 @@ const Navbar = ({ onShowToast }) => {
     if (result.success) {
       onShowToast("success", "Wallet disconnected");
       setShowDropdown(false);
+    } else {
+      onShowToast("error", result.message);
     }
   };
 

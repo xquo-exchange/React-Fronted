@@ -3,12 +3,10 @@ import "./SwapBox.css";
 import { FaBitcoin, FaEthereum, FaSyncAlt } from "react-icons/fa";
 import { useWallet } from "../hooks/useWallet";
 
-
-const autoHideTimer = useRef(null);
-
 const SwapBox = ({ onShowToast }) => {
   const { isConnected, connectWallet } = useWallet();
   const [showWarning, setShowWarning] = useState(false);
+  const autoHideTimer = useRef(null); // ✅ Move inside component
 
   useEffect(() => {
     if (isConnected && showWarning) setShowWarning(false);
@@ -24,37 +22,32 @@ const SwapBox = ({ onShowToast }) => {
   }, [showWarning]);
 
   const handleSwapClick = () => {
-  if (!isConnected) {
-    // show immediately
-    setShowWarning(true);
+    if (!isConnected) {
+      setShowWarning(true);
 
-    // reset any previous timer
-    if (autoHideTimer.current) {
-      clearTimeout(autoHideTimer.current);
-      autoHideTimer.current = null;
+      if (autoHideTimer.current) {
+        clearTimeout(autoHideTimer.current);
+        autoHideTimer.current = null;
+      }
+
+      autoHideTimer.current = setTimeout(() => {
+        setShowWarning(false);
+        autoHideTimer.current = null;
+      }, 3000);
+
+      if (onShowToast) onShowToast("error", "Connect your wallet to Swap");
+      return;
     }
-
-    // hide after 3s
-    autoHideTimer.current = setTimeout(() => {
-      setShowWarning(false);
-      autoHideTimer.current = null;
-    }, 3000);
-
-    if (onShowToast) onShowToast("error", "Connect your wallet to Swap");
-    return;
-  }
-    // TODO: swap logic here
     console.log("Swap initiated");
   };
 
   const closeWarning = () => {
-  if (autoHideTimer.current) {
-    clearTimeout(autoHideTimer.current);
-    autoHideTimer.current = null;
+    if (autoHideTimer.current) {
+      clearTimeout(autoHideTimer.current);
+      autoHideTimer.current = null;
     }
     setShowWarning(false);
-    };
-
+  };
 
   return (
     <div className="swap-row-horizontal">

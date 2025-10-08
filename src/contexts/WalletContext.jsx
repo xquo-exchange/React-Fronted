@@ -75,7 +75,7 @@ export const WalletProvider = ({ children }) => {
       return {
         success: false,
         error: 'WALLET_NOT_INSTALLED',
-        message: 'Phantom wallet not detected. Please install Phantom.',
+        message: 'Phantom wallet not detected. Please install Phantom. If the problem continues, contact loremipsum@x-quo.com.',
       };
     }
 
@@ -93,6 +93,8 @@ export const WalletProvider = ({ children }) => {
       };
     } catch (error) {
       setConnecting(false);
+      
+      // Handle different error types
       if (error.code === 4001 || error.message.includes('User rejected')) {
         return {
           success: false,
@@ -100,6 +102,15 @@ export const WalletProvider = ({ children }) => {
           message: 'Signature declined. You can retry anytime.',
         };
       }
+      
+      if (error.message.includes('network') || error.message.includes('RPC')) {
+        return {
+          success: false,
+          error: 'RPC_UNAVAILABLE',
+          message: 'Network temporarily unavailable. Please retry later.',
+        };
+      }
+
       return {
         success: false,
         error: 'CONNECTION_FAILED',
@@ -134,6 +145,208 @@ export const WalletProvider = ({ children }) => {
     }
   }, []);
 
+  // Check network/chain support
+  const checkNetwork = useCallback(async () => {
+    if (!window.solana || !isConnected) {
+      return {
+        success: false,
+        error: 'NOT_CONNECTED',
+        message: 'Wallet not connected.',
+      };
+    }
+
+    try {
+      // Phantom doesn't expose network directly, but you can check via connection
+      // This is a placeholder - adjust based on your needs
+      const cluster = await window.solana.request({ method: 'cluster' });
+      
+      // Example: Check if on correct network (mainnet-beta, devnet, testnet)
+      const supportedNetworks = ['mainnet-beta', 'devnet'];
+      if (!supportedNetworks.includes(cluster)) {
+        return {
+          success: false,
+          error: 'CHAIN_NOT_SUPPORTED',
+          message: 'This pool is not available on the current network. Please switch network.',
+        };
+      }
+
+      setNetwork(cluster);
+      return { success: true, network: cluster };
+    } catch (error) {
+      return {
+        success: false,
+        error: 'NETWORK_CHECK_FAILED',
+        message: 'Failed to check network.',
+      };
+    }
+  }, [isConnected]);
+
+  // Check balance
+  const checkBalance = useCallback(async (requiredAmount) => {
+    if (!window.solana || !isConnected) {
+      return {
+        success: false,
+        error: 'NOT_CONNECTED',
+        message: 'Wallet not connected.',
+      };
+    }
+
+    try {
+      const { Connection, PublicKey, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
+      const connection = new Connection('https://api.mainnet-beta.solana.com');
+      const publicKey = new PublicKey(walletAddress);
+      const balance = await connection.getBalance(publicKey);
+      const balanceInSOL = balance / LAMPORTS_PER_SOL;
+
+      if (balanceInSOL < requiredAmount) {
+        return {
+          success: false,
+          error: 'INSUFFICIENT_FUNDS',
+          message: 'Insufficient balance for amount and/or gas. Adjust the amount or top up your wallet.',
+        };
+      }
+
+      return { success: true, balance: balanceInSOL };
+    } catch (error) {
+      return {
+        success: false,
+        error: 'BALANCE_CHECK_FAILED',
+        message: 'Failed to check balance.',
+      };
+    }
+  }, [isConnected, walletAddress]);
+
+  // Simulate transaction approval
+  const approveTransaction = useCallback(async () => {
+    if (!isConnected) {
+      return {
+        success: false,
+        error: 'NOT_CONNECTED',
+        message: 'Wallet not connected.',
+      };
+    }
+
+    try {
+      // Simulate approval logic here
+      // This is a placeholder
+      const approved = true; // Replace with actual approval logic
+
+      if (!approved) {
+        return {
+          success: false,
+          error: 'APPROVAL_FAILED',
+          message: 'Approval failed. Retry. If this continues, contact loremipsum@x-quo.com.',
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      if (error.message.includes('User rejected')) {
+        return {
+          success: false,
+          error: 'USER_REJECTED_SIGNATURE',
+          message: 'Signature declined. You can retry anytime.',
+        };
+      }
+
+      return {
+        success: false,
+        error: 'APPROVAL_FAILED',
+        message: 'Approval failed. Retry. If this continues, contact loremipsum@x-quo.com.',
+      };
+    }
+  }, [isConnected]);
+
+  // Simulate stake transaction
+  const stakeTransaction = useCallback(async () => {
+    if (!isConnected) {
+      return {
+        success: false,
+        error: 'NOT_CONNECTED',
+        message: 'Wallet not connected.',
+      };
+    }
+
+    try {
+      // Simulate stake logic here
+      // This is a placeholder
+      const staked = true; // Replace with actual stake logic
+
+      if (!staked) {
+        return {
+          success: false,
+          error: 'STAKE_FAILED',
+          message: 'Transaction not confirmed. Retry. If this continues, contact loremipsum@x-quo.com.',
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        return {
+          success: false,
+          error: 'RATE_LIMIT',
+          message: 'Network temporarily unavailable. Please retry later.',
+        };
+      }
+
+      return {
+        success: false,
+        error: 'STAKE_FAILED',
+        message: 'Transaction not confirmed. Retry. If this continues, contact loremipsum@x-quo.com.',
+      };
+    }
+  }, [isConnected]);
+
+  // Simulate unstake transaction
+  const unstakeTransaction = useCallback(async () => {
+    if (!isConnected) {
+      return {
+        success: false,
+        error: 'NOT_CONNECTED',
+        message: 'Wallet not connected.',
+      };
+    }
+
+    try {
+      // Simulate unstake logic here
+      // This is a placeholder
+      const unstaked = true; // Replace with actual unstake logic
+
+      if (!unstaked) {
+        return {
+          success: false,
+          error: 'UNSTAKE_FAILED',
+          message: 'Transaction not confirmed. Retry. If this continues, contact loremipsum@x-quo.com.',
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: 'UNSTAKE_FAILED',
+        message: 'Transaction not confirmed. Retry. If this continues, contact loremipsum@x-quo.com.',
+      };
+    }
+  }, [isConnected]);
+
+  // Check quote expiration
+  const checkQuoteExpiration = useCallback((quoteTimestamp, expirationMinutes = 5) => {
+    const now = Date.now();
+    const expirationTime = quoteTimestamp + (expirationMinutes * 60 * 1000);
+
+    if (now > expirationTime) {
+      return {
+        success: false,
+        error: 'QUOTE_EXPIRED',
+        message: 'Quote expired. Refresh and retry.',
+      };
+    }
+
+    return { success: true };
+  }, []);
+
   const value = {
     walletAddress,
     isConnected,
@@ -142,6 +355,12 @@ export const WalletProvider = ({ children }) => {
     network,
     connectWallet,
     disconnectWallet,
+    checkNetwork,
+    checkBalance,
+    approveTransaction,
+    stakeTransaction,
+    unstakeTransaction,
+    checkQuoteExpiration,
   };
 
   return (

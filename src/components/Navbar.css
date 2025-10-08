@@ -176,3 +176,48 @@
 .dropdown-item:last-child {
   border-radius: 0 0 8px 8px;
 }
+
+.network-warning-btn {
+  padding: 8px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+  transition: all 0.2s ease;
+}
+
+.network-warning-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.dropdown-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.dropdown-value {
+  font-size: 12px;
+  color: white;
+  font-weight: 600;
+}
+
+.dropdown-item.warning {
+  color: #ef4444;
+  border-top: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.dropdown-item.warning:hover {
+  background: rgba(239, 68, 68, 0.1);
+}

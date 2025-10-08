@@ -6,10 +6,12 @@ const Navbar = ({ onShowToast }) => {
   const {
     walletAddress,
     isConnected,
-    isPhantomInstalled,
+    isMetaMaskInstalled,
     connecting,
+    chainId,
     connectWallet,
     disconnectWallet,
+    switchToMainnet,
   } = useWallet();
 
   const [showDropdown, setShowDropdown] = useState(false);
@@ -19,7 +21,6 @@ const Navbar = ({ onShowToast }) => {
     if (result.success) {
       onShowToast("success", "Wallet connected successfully");
     } else {
-      // Display error message from WalletContext
       onShowToast("error", result.message);
     }
   };
@@ -34,10 +35,34 @@ const Navbar = ({ onShowToast }) => {
     }
   };
 
+  const handleSwitchNetwork = async () => {
+    const result = await switchToMainnet();
+    if (result.success) {
+      onShowToast("success", "Switched to Ethereum Mainnet");
+    } else {
+      onShowToast("error", result.message);
+    }
+  };
+
   const truncateAddress = (address) => {
     if (!address) return "";
-    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
+
+  const getNetworkName = (chainId) => {
+    switch (chainId) {
+      case 1:
+        return "Ethereum";
+      case 5:
+        return "Goerli";
+      case 11155111:
+        return "Sepolia";
+      default:
+        return `Chain ${chainId}`;
+    }
+  };
+
+  const isMainnet = chainId === 1;
 
   return (
     <nav className="navbar">
@@ -51,10 +76,21 @@ const Navbar = ({ onShowToast }) => {
             onClick={handleConnect}
             disabled={connecting}
           >
-            {connecting ? "Connecting..." : "Connect Wallet"}
+            {connecting ? "Connecting..." : "Connect MetaMask"}
           </button>
         ) : (
           <div className="wallet-connected">
+            {/* Network indicator */}
+            {!isMainnet && (
+              <button
+                className="network-warning-btn"
+                onClick={handleSwitchNetwork}
+                title="Click to switch to Ethereum Mainnet"
+              >
+                ⚠️ {getNetworkName(chainId)}
+              </button>
+            )}
+
             <button
               className="wallet-button connected"
               onClick={() => setShowDropdown(!showDropdown)}
@@ -62,8 +98,23 @@ const Navbar = ({ onShowToast }) => {
               <span className="wallet-indicator"></span>
               {truncateAddress(walletAddress)}
             </button>
+
             {showDropdown && (
               <div className="wallet-dropdown">
+                <div className="dropdown-info">
+                  <span className="dropdown-label">Network</span>
+                  <span className="dropdown-value">
+                    {getNetworkName(chainId)}
+                  </span>
+                </div>
+                {!isMainnet && (
+                  <button
+                    className="dropdown-item warning"
+                    onClick={handleSwitchNetwork}
+                  >
+                    Switch to Mainnet
+                  </button>
+                )}
                 <button className="dropdown-item" onClick={handleDisconnect}>
                   Disconnect
                 </button>

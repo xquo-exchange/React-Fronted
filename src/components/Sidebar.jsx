@@ -1,5 +1,6 @@
 import React from "react";
 import "./Sidebar.css";
+import StakeBox from "./StakeBox";
 
 const Sidebar = ({ activePage, setActivePage }) => {
   return (
@@ -19,7 +20,9 @@ const Sidebar = ({ activePage, setActivePage }) => {
           <h1 className="d-text">Stake</h1>
         </button>
       </div>
+
     </div>
+
   );
 };
 

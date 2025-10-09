@@ -3,13 +3,21 @@
 }
 
 body, #root {
-  background: #0a0a0a;
+  background: transparent;
+}
+
+.graph-container {
+  position: absolute;
+  top: 220px;
+  left: 0;
+  width: 100%;
+  z-index: 1;
 }
 
 .app-container {
   display: flex;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   padding-top: 80px; /* Space for fixed navbar */
   gap: 40px;
   padding-left: 40px;

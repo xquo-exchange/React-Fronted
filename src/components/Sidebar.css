@@ -1,7 +1,6 @@
 .sidebar-box {
   width: 311px;
   height: fit-content;
-  min-height: 140px;
   flex-shrink: 0;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -13,18 +12,19 @@
 
 .buttons {
   display: flex;
-  width: 270px;
-  flex-direction: column;
+  width: 311px;
+  flex-direction: row;
   align-items: center;
   gap: 20px;
   flex-shrink: 0;
-  margin: 20px auto 0;
+  margin: 20px;
 }
 
 .swap-button,
 .deposit-button {
   display: flex;
   height: 40px;
+  width: 120px;
   padding: 8px;
   justify-content: center;
   align-items: center;
@@ -80,4 +80,12 @@
 .swap-button.active .s-text,
 .deposit-button.active .d-text {
   color: #fff;
+}
+
+.stake-container {
+  margin-top: 20px;
+  padding: 10px;
+  background: rgba(25,25,25,0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
 }

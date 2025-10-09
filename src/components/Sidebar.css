@@ -69,3 +69,15 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.swap-button.active,
+.deposit-button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transition: 0.2s ease;
+}
+
+.swap-button.active .s-text,
+.deposit-button.active .d-text {
+  color: #fff;
+}

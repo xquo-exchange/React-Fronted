@@ -8,7 +8,6 @@ const Graph = () => {
 
   return (
     <div className="graph-box">
-      <h1 className="graph-title">Swap</h1>
 
       <div className="filter-container">
         <div className="date-selector">

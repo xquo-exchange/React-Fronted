@@ -4,12 +4,15 @@ import Header from './components/Header';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import SwapBox from './components/SwapBox';
+import StakeBox from './components/StakeBox'; 
 import Graph from './components/Graph';
 import Toast from './components/Toast';
 
 function App() {
+
   const [toast, setToast] = useState(null);
 
+  const [activePage, setActivePage] = useState('swap');
   const showToast = (type, message, txHash = null) => {
     setToast({ type, message, txHash });
   };
@@ -21,16 +24,26 @@ function App() {
   return (
     <>
       <Navbar onShowToast={showToast} />
+
       <div className="app-container">
         <div style={{ width: '311px', flexShrink: 0 }}>
           <Header />
-          <Sidebar />
+          <Sidebar
+            activePage={activePage}
+            setActivePage={setActivePage}
+          />
         </div>
+
         <main className="main-content">
-          <SwapBox onShowToast={showToast} />
+
+          {activePage === 'swap' && <SwapBox onShowToast={showToast} />}
+
+          {activePage === 'stake' && <StakeBox onShowToast={showToast} />}
+
           <Graph />
         </main>
       </div>
+
       {toast && (
         <Toast
           type={toast.type}

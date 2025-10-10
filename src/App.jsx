@@ -4,7 +4,7 @@ import './App.css';
 import Header from './components/Header';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
-import SwapInterface from './components/SwapInterface'; // ✅ NEW IMPORT
+import SwapInterface from './components/SwapInterface';
 import StakeBox from './components/StakeBox';
 import Graph from './components/Graph';
 import Toast from './components/Toast';
@@ -34,17 +34,16 @@ function App() {
         <aside style={{ width: 311, flexShrink: 0, zIndex: 2, position: 'relative' }}>
           <Header />
           <Sidebar activePage={activePage} setActivePage={setActivePage} />
-
-          {/* StakeBox */}
-          {activePage === 'stake' && (
-            <StakeBox onShowToast={showToast} />
-          )}
         </aside>
 
         {/* MAIN AREA */}
         <main className="main-content" style={{ position: 'relative', zIndex: 2, overflow: 'visible' }}>
           {activePage === 'swap' && (
-            <SwapInterface onShowToast={showToast} /> // ✅ REPLACED SwapBox with SwapInterface
+            <SwapInterface onShowToast={showToast} />
+          )}
+
+          {activePage === 'stake' && (
+            <StakeBox onShowToast={showToast} />
           )}
 
 

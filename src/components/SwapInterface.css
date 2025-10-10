@@ -1,0 +1,347 @@
+.swap-interface-container {
+  width: 100%;
+  max-width: 1029px;
+  background: rgba(20, 20, 20, 0.6);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 32px;
+  margin-top: 20px;
+  color: white;
+}
+
+.swap-interface-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0 0 32px 0;
+  text-align: center;
+  color: #ffffff;
+}
+
+.swap-token-box {
+  background: rgba(42, 42, 42, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+
+.swap-token-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.swap-balance-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.swap-max-button {
+  background: transparent;
+  border: none;
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 4px 8px;
+}
+
+.swap-max-button:hover {
+  color: #764ba2;
+}
+
+.swap-token-input-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.swap-amount-input {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 28px;
+  font-weight: 500;
+  outline: none;
+  width: 50%;
+  font-family: 'Inter', sans-serif;
+}
+
+.swap-amount-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.swap-token-select {
+  background: rgba(58, 58, 58, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.swap-token-select:hover {
+  background: rgba(74, 74, 74, 0.8);
+}
+
+.swap-token-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.swap-usd-value {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 8px;
+}
+
+.swap-direction-container {
+  display: flex;
+  justify-content: center;
+  margin: -6px 0;
+  position: relative;
+  z-index: 10;
+}
+
+.swap-direction-button {
+  background: rgba(58, 58, 58, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.swap-direction-button:hover {
+  background: rgba(74, 74, 74, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.swap-direction-icon {
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.swap-route-info {
+  background: rgba(42, 42, 42, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.swap-route-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 14px;
+}
+
+.swap-route-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.swap-route-value-right {
+  text-align: right;
+}
+
+.swap-route-bold {
+  font-weight: 600;
+  color: white;
+}
+
+.swap-button-container {
+  position: relative;
+}
+
+.swap-execute-button {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 16px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.swap-execute-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.swap-execute-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.swap-step-indicator {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.swap-button-text {
+  margin-left: 32px;
+}
+
+.swap-status-message {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.swap-status-error {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.swap-status-success {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.swap-status-info {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.swap-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.swap-modal-content {
+  background: rgba(26, 26, 26, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 32px;
+  width: min(480px, calc(100% - 48px));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.swap-modal-title {
+  margin: 0 0 24px 0;
+  font-size: 24px;
+  color: white;
+  font-weight: 700;
+  text-align: center;
+}
+
+.swap-modal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.swap-modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.swap-modal-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+.swap-modal-value {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.swap-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.swap-modal-button {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 0;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.swap-modal-confirm {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.swap-modal-confirm:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+
+.swap-modal-cancel {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.swap-modal-cancel:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.swap-modal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .swap-interface-container {
+    padding: 20px;
+  }
+
+  .swap-interface-title {
+    font-size: 24px;
+  }
+
+  .swap-amount-input {
+    font-size: 20px;
+  }
+}

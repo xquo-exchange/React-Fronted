@@ -13,7 +13,7 @@ const USDC_RUSDY_POOL_ID = "factory-stable-ng-161";
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 
-const StakeBox = ({ onShowToast }) => {
+const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const { walletAddress: account, isConnected, connectWallet } = useWallet();
   const [showWarning, setShowWarning] = useState(false);
   const [amount, setAmount] = useState("");
@@ -23,13 +23,26 @@ const StakeBox = ({ onShowToast }) => {
   const autoHideTimer = useRef(null);
 
   const [mode, setMode] = useState("stake");
+  const [strategy, setStrategy] = useState("conservative"); // New: Strategy selection
   
   const [usdcBalance, setUsdcBalance] = useState("0");
   const [lpTokenBalance, setLpTokenBalance] = useState("0");
+  
+  // Pool stats
+  const [poolStats, setPoolStats] = useState({
+    totalLiquidity: "0",
+    apy: "0",
+    userPositionUSD: "0"
+  });
 
   const rpcProvider = new ethers.providers.JsonRpcProvider(
     "https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2"
   );
+  
+  // APY rates for strategies
+  const CONSERVATIVE_APY = 8.5; // 8.5%
+  const ENHANCED_APY = 12.5; // 12.5%
+  const EARLY_WITHDRAWAL_FEE = 0.5; // 0.5%
 
   // Helper function to parse error messages
   const parseError = (error) => {
@@ -124,6 +137,21 @@ const StakeBox = ({ onShowToast }) => {
         const tokenBalances = await usdyPool.wallet.lpTokenBalances();
         const lpBalance = tokenBalances["lpToken"] || "0";
         setLpTokenBalance(lpBalance);
+        
+        // Fetch pool stats
+        try {
+          const tvl = await usdyPool.stats.totalLiquidity();
+          const lpPrice = parseFloat(lpBalance) > 0 ? parseFloat(usdcBalance) / parseFloat(lpBalance) : 1;
+          const userPositionUSD = parseFloat(lpBalance) * lpPrice;
+          
+          setPoolStats({
+            totalLiquidity: tvl || "0",
+            apy: strategy === "conservative" ? CONSERVATIVE_APY.toString() : ENHANCED_APY.toString(),
+            userPositionUSD: userPositionUSD.toFixed(2)
+          });
+        } catch (error) {
+          console.error("Error fetching pool stats:", error);
+        }
       } catch (error) {
         console.error("Error fetching LP balance:", error);
         setLpTokenBalance("0");
@@ -131,15 +159,61 @@ const StakeBox = ({ onShowToast }) => {
     };
 
     fetchLpBalance();
-  }, [account, isConnected]);
+  }, [account, isConnected, strategy, usdcBalance]);
 
   useEffect(() => {
     if (isConnected && showWarning) setShowWarning(false);
   }, [isConnected, showWarning]);
 
+  // Handle prefill from swap success
+  useEffect(() => {
+    if (prefillAmount && prefillAmount !== '') {
+      setAmount(prefillAmount);
+      setMode('stake'); // Switch to stake mode
+      if (onPrefillUsed) {
+        onPrefillUsed(); // Clear the prefill so it doesn't happen again
+      }
+    }
+  }, [prefillAmount, onPrefillUsed]);
+
   const closeWarning = () => {
     if (autoHideTimer.current) clearTimeout(autoHideTimer.current);
     setShowWarning(false);
+  };
+  
+  // Calculate projected yields
+  const calculateYield = () => {
+    if (!amount || parseFloat(amount) <= 0) return { daily: 0, monthly: 0, yearly: 0 };
+    
+    const principal = parseFloat(amount);
+    const apy = strategy === "conservative" ? CONSERVATIVE_APY : ENHANCED_APY;
+    
+    const yearly = principal * (apy / 100);
+    const monthly = yearly / 12;
+    const daily = yearly / 365;
+    
+    return {
+      daily: daily.toFixed(2),
+      monthly: monthly.toFixed(2),
+      yearly: yearly.toFixed(2)
+    };
+  };
+  
+  // Calculate unstake summary
+  const calculateUnstakeSummary = () => {
+    if (!amount || parseFloat(amount) <= 0) return { usdc: 0, fee: 0, net: 0 };
+    
+    const lpAmount = parseFloat(amount);
+    const lpPrice = parseFloat(lpTokenBalance) > 0 ? parseFloat(usdcBalance) / parseFloat(lpTokenBalance) : 1;
+    const estimatedUSDC = lpAmount * lpPrice;
+    const fee = estimatedUSDC * (EARLY_WITHDRAWAL_FEE / 100);
+    const netAmount = estimatedUSDC - fee;
+    
+    return {
+      usdc: estimatedUSDC.toFixed(2),
+      fee: fee.toFixed(2),
+      net: netAmount.toFixed(2)
+    };
   };
 
   const setMaxAmount = () => {
@@ -336,53 +410,102 @@ const StakeBox = ({ onShowToast }) => {
     }
   };
 
+  const yieldProjection = calculateYield();
+  const unstakeSummary = calculateUnstakeSummary();
+
   return (
     <>
-      <div className="stake-box">
-        <div className="switch-buttons">
-          <div className="stake-mode-switch" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-            <button
-              className={`mode-btn ${mode === "stake" ? "active" : ""}`}
-              onClick={() => {
-                setMode("stake");
-                setAmount("");
-              }}
-            >
-              Deposit
-            </button>
-            <button
-              className={`mode-btn ${mode === "unstake" ? "active" : ""}`}
-              onClick={() => {
-                setMode("unstake");
-                setAmount("");
-              }}
-            >
-              Withdraw
-            </button>
+      <div className="stake-container">
+        {/* Pool Detail Card */}
+        <div className="pool-detail-card">
+          <h3 className="pool-title">USDC/rUSDY Liquidity Pool</h3>
+          <div className="pool-stats-grid">
+            <div className="pool-stat">
+              <span className="pool-stat-label">Total Liquidity</span>
+              <span className="pool-stat-value">${parseFloat(poolStats.totalLiquidity).toLocaleString()}</span>
+            </div>
+            <div className="pool-stat">
+              <span className="pool-stat-label">Your Position</span>
+              <span className="pool-stat-value">${poolStats.userPositionUSD}</span>
+            </div>
+            <div className="pool-stat">
+              <span className="pool-stat-label">Current APY</span>
+              <span className="pool-stat-value apy-highlight">{poolStats.apy}%</span>
+            </div>
           </div>
+        </div>
 
-          <div className="balance-display">
-            <span className="balance-label">
-              Available:{" "}
-              {mode === "stake"
-                ? `${parseFloat(usdcBalance).toFixed(2)} USDC`
-                : `${parseFloat(lpTokenBalance).toFixed(6)} LP`}
+        {/* Mode Switch Buttons */}
+        <div className="stake-mode-switch">
+          <button
+            className={`stake-mode-btn ${mode === "stake" ? "active" : ""}`}
+            onClick={() => {
+              setMode("stake");
+              setAmount("");
+            }}
+          >
+            Deposit
+          </button>
+          <button
+            className={`stake-mode-btn ${mode === "unstake" ? "active" : ""}`}
+            onClick={() => {
+              setMode("unstake");
+              setAmount("");
+            }}
+          >
+            Withdraw
+          </button>
+        </div>
+
+        {/* Strategy Selection (only in stake mode) */}
+        {mode === "stake" && (
+          <div className="strategy-selection">
+            <h4 className="strategy-title">Select Strategy</h4>
+            <div className="strategy-buttons">
+              <button
+                className={`strategy-btn ${strategy === "conservative" ? "active" : ""}`}
+                onClick={() => setStrategy("conservative")}
+              >
+                <div className="strategy-header">
+                  <span className="strategy-name">Conservative</span>
+                  <span className="strategy-apy">{CONSERVATIVE_APY}% APY</span>
+                </div>
+                <p className="strategy-desc">Lower risk, stable returns</p>
+              </button>
+              <button
+                className={`strategy-btn ${strategy === "enhanced" ? "active" : ""}`}
+                onClick={() => setStrategy("enhanced")}
+              >
+                <div className="strategy-header">
+                  <span className="strategy-name">Enhanced</span>
+                  <span className="strategy-apy">{ENHANCED_APY}% APY</span>
+                </div>
+                <p className="strategy-desc">Higher yields, managed risk</p>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Input Box */}
+        <div className="stake-token-box">
+          <div className="stake-token-header">
+            <span className="stake-balance-label">
+              Avail. {mode === "stake"
+                ? parseFloat(usdcBalance).toFixed(2)
+                : parseFloat(lpTokenBalance).toFixed(6)}{" "}
+              {mode === "stake" ? "USDC" : "LP"}
             </span>
-            <button onClick={setMaxAmount} className="max-button-inline">
+            <button onClick={setMaxAmount} className="stake-max-button">
               MAX
             </button>
           </div>
 
-          <div className="stake-input-container">
+          <div className="stake-input-row">
             <input
               type="text"
               inputMode="decimal"
-              className="stake-box-input"
-              placeholder={
-                mode === "stake"
-                  ? "Amount of USDC to deposit"
-                  : "Amount of LP tokens to withdraw"
-              }
+              className="stake-amount-input"
+              placeholder="0.0"
               value={amount}
               onChange={(e) => {
                 const value = e.target.value;
@@ -393,18 +516,76 @@ const StakeBox = ({ onShowToast }) => {
             />
           </div>
 
-          <button
-            className="stake-box-button"
-            onClick={handleActionClick}
-            disabled={isLoading || !amount || parseFloat(amount) <= 0}
-          >
-            {isLoading
-              ? "Processing..."
-              : mode === "stake"
-              ? "Deposit"
-              : "Withdraw"}
-          </button>
+          <div className="stake-usd-value">
+            {amount && parseFloat(amount) > 0
+              ? `≈ $${parseFloat(amount).toFixed(2)}`
+              : "≈ $0.00"}
+          </div>
         </div>
+
+        {/* Yield Projection (stake mode) or Unstake Summary (unstake mode) */}
+        {mode === "stake" && amount && parseFloat(amount) > 0 && (
+          <div className="yield-projection">
+            <h4 className="yield-title">Projected Earnings</h4>
+            <div className="yield-grid">
+              <div className="yield-item">
+                <span className="yield-period">Daily</span>
+                <span className="yield-amount">${yieldProjection.daily}</span>
+              </div>
+              <div className="yield-item">
+                <span className="yield-period">Monthly</span>
+                <span className="yield-amount">${yieldProjection.monthly}</span>
+              </div>
+              <div className="yield-item">
+                <span className="yield-period">Yearly</span>
+                <span className="yield-amount highlight">${yieldProjection.yearly}</span>
+              </div>
+            </div>
+            <p className="yield-note">
+              Based on {strategy === "conservative" ? CONSERVATIVE_APY : ENHANCED_APY}% APY • Rates may vary
+            </p>
+          </div>
+        )}
+
+        {mode === "unstake" && amount && parseFloat(amount) > 0 && (
+          <div className="unstake-summary">
+            <h4 className="unstake-title">Withdrawal Summary</h4>
+            <div className="unstake-rows">
+              <div className="unstake-row">
+                <span className="unstake-label">LP Tokens to Remove</span>
+                <span className="unstake-value">{amount}</span>
+              </div>
+              <div className="unstake-row">
+                <span className="unstake-label">USDC to Receive (est.)</span>
+                <span className="unstake-value">${unstakeSummary.usdc}</span>
+              </div>
+              <div className="unstake-row warning">
+                <span className="unstake-label">Early Withdrawal Fee ({EARLY_WITHDRAWAL_FEE}%)</span>
+                <span className="unstake-value">-${unstakeSummary.fee}</span>
+              </div>
+              <div className="unstake-row total">
+                <span className="unstake-label">Net Amount</span>
+                <span className="unstake-value">${unstakeSummary.net}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Action Button */}
+        <button
+          className="stake-action-button"
+          onClick={handleActionClick}
+          disabled={isLoading || !amount || parseFloat(amount) <= 0}
+        >
+          <div className="stake-step-indicator">1</div>
+          <span className="stake-button-text">
+            {isLoading
+              ? "PROCESSING..."
+              : mode === "stake"
+              ? "DEPOSIT"
+              : "WITHDRAW"}
+          </span>
+        </button>
       </div>
 
       {showWarning &&

@@ -1,72 +1,184 @@
-/* Main container - matches swap-row-horizontal */
-.stake-box {
+/* Main Container */
+.stake-container {
   width: 100%;
   max-width: 1029px;
-  min-height: 160px;
   background: rgba(20, 20, 20, 0.6);
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 24px;
+  backdrop-filter: blur(10px);
+  padding: 32px;
+  margin-top: 20px;
+  color: white;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-  backdrop-filter: blur(10px);
-  margin-top: 20px;
-  position: relative;
+  gap: 24px;
 }
 
-/* Mode switch buttons at top */
+/* Pool Detail Card */
+.pool-detail-card {
+  background: rgba(42, 42, 42, 0.6);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pool-title {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.pool-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.pool-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pool-stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Inter', sans-serif;
+}
+
+.pool-stat-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.pool-stat-value.apy-highlight {
+  color: #10b981;
+}
+
+/* Mode Switch Buttons */
 .stake-mode-switch {
   display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 12px;
 }
 
-.mode-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
+.stake-mode-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
 }
 
-.mode-btn.active {
+.stake-mode-btn.active {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: 1px solid transparent;
 }
 
-.mode-btn:hover:not(.active) {
+.stake-mode-btn:hover:not(.active) {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Content area - matches swap-section layout */
-.switch-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* Strategy Selection */
+.strategy-selection {
+  background: rgba(42, 42, 42, 0.4);
+  border-radius: 12px;
+  padding: 20px;
 }
 
-/* Balance display - similar to swap-label */
-.balance-display {
+.strategy-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.strategy-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.strategy-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.strategy-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.strategy-btn.active {
+  background: rgba(102, 126, 234, 0.15);
+  border-color: #667eea;
+}
+
+.strategy-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0;
+  margin-bottom: 8px;
 }
 
-.balance-label {
+.strategy-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.strategy-apy {
+  font-size: 14px;
+  font-weight: 700;
+  color: #10b981;
+  font-family: 'Inter', sans-serif;
+}
+
+.strategy-desc {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Token Box (Like Swap Interface) */
+.stake-token-box {
+  background: rgba(42, 42, 42, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.stake-token-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.stake-balance-label {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.6);
   font-family: 'Inter', sans-serif;
 }
 
-.max-button-inline {
+.stake-max-button {
   background: transparent;
   border: none;
   color: #667eea;
@@ -78,68 +190,202 @@
   font-family: 'Inter', sans-serif;
 }
 
-.max-button-inline:hover {
+.stake-max-button:hover {
   color: #764ba2;
 }
 
-/* Input container */
-.stake-input-container {
+/* Input Row */
+.stake-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 16px;
+  margin-bottom: 8px;
 }
 
-/* Input field - similar to swap amount styling */
-.stake-box-input {
-  flex: 1;
-  height: 48px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.03);
-  color: #ffffff;
-  font-family: 'Inter', sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  padding: 0 16px;
-  outline: none;
-  transition: all 0.2s;
-}
-
-.stake-box-input:focus {
-  border-color: #667eea;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.stake-box-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-/* Action button - matches swap-middle hover style */
-.stake-box-button {
-  width: 100%;
-  appearance: none;
+.stake-amount-input {
+  background: transparent;
   border: none;
-  border-radius: 10px;
-  padding: 14px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  transition: all 0.3s ease;
+  font-size: 32px;
+  font-weight: 500;
+  outline: none;
+  width: 100%;
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
 }
 
-.stake-box-button:hover:not(:disabled) {
+.stake-amount-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* USD Value */
+.stake-usd-value {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Yield Projection */
+.yield-projection {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.yield-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #10b981;
+  font-family: 'Inter', sans-serif;
+}
+
+.yield-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.yield-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.yield-period {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.yield-amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.yield-amount.highlight {
+  color: #10b981;
+  font-size: 24px;
+}
+
+.yield-note {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Unstake Summary */
+.unstake-summary {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.unstake-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ef4444;
+  font-family: 'Inter', sans-serif;
+}
+
+.unstake-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.unstake-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.unstake-row:last-child {
+  border-bottom: none;
+}
+
+.unstake-row.warning {
+  color: #f59e0b;
+}
+
+.unstake-row.total {
+  font-weight: 700;
+  font-size: 16px;
+  padding-top: 12px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.unstake-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Inter', sans-serif;
+}
+
+.unstake-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.unstake-row.total .unstake-value {
+  color: #10b981;
+  font-size: 18px;
+}
+
+/* Action Button (Like Swap Interface) */
+.stake-action-button {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 16px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.stake-action-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
-.stake-box-button:disabled {
+.stake-action-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+.stake-step-indicator {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.stake-button-text {
+  margin-left: 32px;
 }
 
 /* Status Modal - uses swap-warning styles from SwapBox.css */

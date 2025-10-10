@@ -332,6 +332,82 @@
   cursor: not-allowed;
 }
 
+/* Slippage Editor */
+.slippage-editor-row {
+  flex-direction: column;
+  align-items: stretch !important;
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 12px;
+}
+
+.slippage-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.slippage-preset-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.slippage-preset-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.slippage-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.slippage-preset-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+}
+
+.slippage-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 4px 12px;
+}
+
+.slippage-input {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  width: 60px;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.slippage-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.slippage-percent {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .swap-interface-container {
     padding: 20px;

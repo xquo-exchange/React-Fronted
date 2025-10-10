@@ -14,11 +14,17 @@ import Orb from './components/Orb';
 function App() {
   const [toast, setToast] = useState(null);
   const [activePage, setActivePage] = useState('swap');
+  const [swapToStakeAmount, setSwapToStakeAmount] = useState('');
 
   const showToast = (type, message, txHash = null) => {
     setToast({ type, message, txHash });
   };
   const closeToast = () => setToast(null);
+
+  const handleSwapSuccess = (usdcAmount) => {
+    // Store USDC amount from successful swap for pre-filling stake
+    setSwapToStakeAmount(usdcAmount);
+  };
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', overflow: 'visible' }}>
@@ -39,11 +45,15 @@ function App() {
         {/* MAIN AREA */}
         <main className="main-content" style={{ position: 'relative', zIndex: 2, overflow: 'visible' }}>
           {activePage === 'swap' && (
-            <SwapInterface onShowToast={showToast} />
+            <SwapInterface onShowToast={showToast} onSwapSuccess={handleSwapSuccess} />
           )}
 
           {activePage === 'stake' && (
-            <StakeBox onShowToast={showToast} />
+            <StakeBox 
+              onShowToast={showToast} 
+              prefillAmount={swapToStakeAmount}
+              onPrefillUsed={() => setSwapToStakeAmount('')}
+            />
           )}
 
 

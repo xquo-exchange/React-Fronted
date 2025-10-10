@@ -71,7 +71,7 @@ const TOKEN_REGISTRY = {
   }
 };
 
-const SwapInterface = ({ slippage = 0.03, onShowToast }) => {
+const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
   const { walletAddress: account } = useWallet();
   const [fromToken, setFromToken] = useState("ETH");
   const [toToken, setToToken] = useState("USDC");
@@ -86,6 +86,9 @@ const SwapInterface = ({ slippage = 0.03, onShowToast }) => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [lastEditedField, setLastEditedField] = useState('from');
   const [tokenBalances, setTokenBalances] = useState({});
+  const [slippage, setSlippage] = useState(0.5); // Default 0.5%
+  const [customSlippage, setCustomSlippage] = useState("");
+  const [showSlippageEditor, setShowSlippageEditor] = useState(false);
 
   const rpcProvider = new ethers.providers.JsonRpcProvider("https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2");
 
@@ -463,16 +466,17 @@ const SwapInterface = ({ slippage = 0.03, onShowToast }) => {
           if (!ethAmount) throw new Error("Cannot calculate ETH amount needed");
 
           setStatus("Executing ETH → USDC swap...");
-          const tx1 = await ethUsdcPool.swap("ETH", "USDC", ethAmount, slippage);
+          const tx1 = await ethUsdcPool.swap("ETH", "USDC", ethAmount, slippage / 100);
           await rpcProvider.waitForTransaction(tx1);
 
           setStatus("Executing USDC → rUSDY swap...");
-          const tx2 = await usdcUsdyPool.swap("USDC", toTokenAddr, fromAmount, slippage);
+          const tx2 = await usdcUsdyPool.swap("USDC", toTokenAddr, fromAmount, slippage / 100);
           const receipt = await rpcProvider.waitForTransaction(tx2);
 
           if (!receipt) throw new Error("Transaction not found");
           setStatus("Swap completed successfully! 🎉");
           if (onShowToast) onShowToast("success", "Swap completed successfully!", tx2);
+          // No USDC output for rUSDY swaps
 
         } else if (fromToken === "USDC" || (fromToken === "ETH" && balance.lt(minGasETH))) {
           setStatus("Executing direct USDC → rUSDY swap...");
@@ -499,12 +503,13 @@ const SwapInterface = ({ slippage = 0.03, onShowToast }) => {
             setStatus("USDC approved successfully!");
           }
 
-          const tx = await usdcUsdyPool.swap("USDC", toTokenAddr, requiredUSDC, slippage);
+          const tx = await usdcUsdyPool.swap("USDC", toTokenAddr, requiredUSDC, slippage / 100);
           const receipt = await rpcProvider.waitForTransaction(tx);
 
           if (!receipt) throw new Error("Transaction not found");
           setStatus("Swap completed successfully! 🎉");
           if (onShowToast) onShowToast("success", "Swap completed successfully!", tx);
+          // No USDC output for rUSDY swaps
 
         } else {
           throw new Error(`Unsupported swap route: ${fromToken} → rUSDY`);
@@ -577,7 +582,7 @@ const SwapInterface = ({ slippage = 0.03, onShowToast }) => {
           fromTokenAddr,
           toTokenAddr,
           fromAmount,
-          slippage
+          slippage / 100
         );
 
         setStatus("Waiting for confirmation...");
@@ -588,6 +593,11 @@ const SwapInterface = ({ slippage = 0.03, onShowToast }) => {
 
         setStatus("Swap completed successfully! 🎉");
         if (onShowToast) onShowToast("success", "Swap completed successfully!", txHash);
+        
+        // If output was USDC, pass amount to stake page for pre-fill
+        if (toToken === "USDC" && toAmount && onSwapSuccess) {
+          onSwapSuccess(toAmount);
+        }
       }
 
       setFromAmount("");
@@ -776,9 +786,49 @@ const SwapInterface = ({ slippage = 0.03, onShowToast }) => {
             <span className="swap-route-label">Estimated TX cost:</span>
             <span className="swap-route-bold">{swapRoute.estimatedGas}</span>
           </div>
-          <div className="swap-route-row">
+          <div className="swap-route-row slippage-editor-row">
             <span className="swap-route-label">Slippage tolerance:</span>
-            <span className="swap-route-bold">{(slippage * 100).toFixed(2)}%</span>
+            <div className="slippage-controls">
+              <div className="slippage-preset-buttons">
+                <button 
+                  className={`slippage-preset-btn ${slippage === 0.1 ? 'active' : ''}`}
+                  onClick={() => { setSlippage(0.1); setCustomSlippage(""); }}
+                >
+                  0.1%
+                </button>
+                <button 
+                  className={`slippage-preset-btn ${slippage === 0.5 ? 'active' : ''}`}
+                  onClick={() => { setSlippage(0.5); setCustomSlippage(""); }}
+                >
+                  0.5%
+                </button>
+                <button 
+                  className={`slippage-preset-btn ${slippage === 1.0 ? 'active' : ''}`}
+                  onClick={() => { setSlippage(1.0); setCustomSlippage(""); }}
+                >
+                  1.0%
+                </button>
+              </div>
+              <div className="slippage-custom-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="0.1"
+                  value={customSlippage}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomSlippage(val);
+                    if (val && !isNaN(val)) {
+                      setSlippage(parseFloat(val));
+                    }
+                  }}
+                  placeholder={slippage.toFixed(1)}
+                  className="slippage-input"
+                />
+                <span className="slippage-percent">%</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

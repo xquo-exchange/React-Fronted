@@ -80,16 +80,15 @@ const Navbar = ({ onShowToast }) => {
           </button>
         ) : (
           <div className="wallet-connected">
-            {/* Network indicator */}
-            {!isMainnet && (
-              <button
-                className="network-warning-btn"
-                onClick={handleSwitchNetwork}
-                title="Click to switch to Ethereum Mainnet"
-              >
-                ⚠️ {getNetworkName(chainId)}
-              </button>
-            )}
+            {/* Network indicator - always visible */}
+            <div 
+              className={`network-indicator ${isMainnet ? 'mainnet' : 'warning'}`}
+              onClick={!isMainnet ? handleSwitchNetwork : undefined}
+              style={{ cursor: !isMainnet ? 'pointer' : 'default' }}
+              title={!isMainnet ? "Click to switch to Ethereum Mainnet" : "Connected to Ethereum Mainnet"}
+            >
+              {isMainnet ? '🟢' : '⚠️'} {getNetworkName(chainId)}
+            </div>
 
             <button
               className="wallet-button connected"

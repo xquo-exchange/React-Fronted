@@ -1,27 +1,25 @@
 * {
-  background: transparent;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body, #root {
-  background: transparent;
-}
-
-.graph-container {
-  position: absolute;
-  top: 220px;
-  left: 0;
-  width: 100%;
-  z-index: 1;
+  background: #000000;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .app-container {
   display: flex;
   width: 100%;
-  height: 100vh;
-  padding-top: 80px; /* Space for fixed navbar */
-  gap: 40px;
-  padding-left: 40px;
-  padding-right: 40px;
+  min-height: 100vh;
+  padding-top: 80px;
+  gap: 60px;
+  padding-left: 60px;
+  padding-right: 60px;
 }
 
 .main-content {
@@ -29,5 +27,14 @@ body, #root {
   display: flex;
   flex-direction: column;
   gap: 40px;
-  max-width: 1200px;
+  max-width: 1000px;
+}
+
+@media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+    padding-left: 24px;
+    padding-right: 24px;
+    gap: 40px;
+  }
 }

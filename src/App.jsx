@@ -30,7 +30,7 @@ function App() {
   if (!isConnected) {
     return (
       <>
-        <GalaxyLanding onConnect={connectWallet} />
+       <GalaxyLanding onConnect={connectWallet} />
         {toast && (
           <Toast
             type={toast.type}
@@ -52,12 +52,12 @@ function App() {
       <Navbar onShowToast={showToast} />
 
       <div className="app-container">
-        <aside style={{ width: 311, flexShrink: 0, zIndex: 2, position: 'relative' }}>
+        <div style={{ width: 311, flexShrink: 0, zIndex: 2, position: 'sticky', display: 'flex', flexDirection: 'row'}}>
           <Header />
-          <Sidebar activePage={activePage} setActivePage={setActivePage} />
-        </aside>
+          <Sidebar activePage={activePage} setActivePage={setActivePage}/>
+        </div>
 
-        <main className="main-content" style={{ position: 'relative', zIndex: 2, overflow: 'visible' }}>
+        <main className="main-content" style={{ position: 'relative', zIndex: 2, overflow: 'visible', marginTop: '140px' }}>
           {activePage === 'swap' && (
             <SwapInterface onShowToast={showToast} onSwapSuccess={handleSwapSuccess} />
           )}

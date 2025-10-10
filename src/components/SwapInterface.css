@@ -7,6 +7,10 @@
   backdrop-filter: blur(20px);
   padding: 32px;
   color: white;
+  position: absolute;
+  top: 38%;
+  left: 33%;
+  transform: translate(-50%, -50%);
 }
 
 .swap-interface-title {

@@ -141,13 +141,23 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         // Fetch pool stats
         try {
           const tvl = await usdyPool.stats.totalLiquidity();
-          const lpPrice = parseFloat(lpBalance) > 0 ? parseFloat(usdcBalance) / parseFloat(lpBalance) : 1;
-          const userPositionUSD = parseFloat(lpBalance) * lpPrice;
+          
+          // Get virtual price of LP token (how much 1 LP token is worth in pool's base currency)
+          let lpTokenPrice = 1; // Default fallback
+          try {
+            const virtualPrice = await usdyPool.stats.virtualPrice();
+            lpTokenPrice = parseFloat(virtualPrice) || 1;
+          } catch (e) {
+            console.log("Could not fetch virtual price, using 1:1 ratio");
+          }
+          
+          const userPositionUSD = parseFloat(lpBalance) * lpTokenPrice;
           
           setPoolStats({
             totalLiquidity: tvl || "0",
             apy: strategy === "conservative" ? CONSERVATIVE_APY.toString() : ENHANCED_APY.toString(),
-            userPositionUSD: userPositionUSD.toFixed(2)
+            userPositionUSD: userPositionUSD.toFixed(2),
+            lpTokenPrice: lpTokenPrice.toFixed(4) // Store LP token price
           });
         } catch (error) {
           console.error("Error fetching pool stats:", error);
@@ -204,7 +214,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     if (!amount || parseFloat(amount) <= 0) return { usdc: 0, fee: 0, net: 0 };
     
     const lpAmount = parseFloat(amount);
-    const lpPrice = parseFloat(lpTokenBalance) > 0 ? parseFloat(usdcBalance) / parseFloat(lpTokenBalance) : 1;
+    const lpPrice = parseFloat(poolStats.lpTokenPrice) || 1; // Use stored LP token price
     const estimatedUSDC = lpAmount * lpPrice;
     const fee = estimatedUSDC * (EARLY_WITHDRAWAL_FEE / 100);
     const netAmount = estimatedUSDC - fee;

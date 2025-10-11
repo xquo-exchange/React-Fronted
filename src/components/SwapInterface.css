@@ -83,16 +83,21 @@
   color: white;
   font-size: 14px;
   font-weight: 500;
-  padding: 10px 20px;
+  padding: 10px 16px 10px 24px; /* More padding on left to center text, accounting for arrow */
   cursor: pointer;
   transition: all 0.15s;
   font-family: 'Inter', sans-serif;
+  width: 110px; /* Fixed smaller width */
+  text-align: center;
+  text-align-last: center;
 }
 
 .swap-token-select option {
-  background: #000000; /* Black background for dropdown options */
-  color: white; /* White text */
-  padding: 8px;
+  background: #000000;
+  color: white;
+  padding: 8px 15px; /* Add horizontal padding to center text */
+  text-align: left;
+
 }
 
 .swap-token-select:hover {
@@ -123,6 +128,8 @@
   margin: -4px 0;
   position: relative;
   z-index: 10;
+  padding-left: 0; /* Remove any left padding */
+  margin-left: -8px; /* Shift slightly left to align with input fields */
 }
 
 .swap-direction-button {

@@ -670,30 +670,32 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
             }}
             className="swap-amount-input"
           />
-          <select
-            value={fromToken}
-            onChange={(e) => {
-              setFromToken(e.target.value);
-              setFromAmount("");
-              setToAmount("");
-              setSwapRoute(null);
-            }}
-            className="swap-token-select"
-          >
-            {Object.keys(TOKEN_REGISTRY)
-              .filter((key) => {
-                const balance = tokenBalances[key];
-                return balance && parseFloat(balance) > 0;
-              })
-              .map((key) => {
-                const token = TOKEN_REGISTRY[key];
-                return (
-                  <option key={key} value={key}>
-                    {token.logo} {token.symbol}
-                  </option>
-                );
-              })}
-          </select>
+          <div className="swap-token-select-wrapper">
+            <select
+              value={fromToken}
+              onChange={(e) => {
+                setFromToken(e.target.value);
+                setFromAmount("");
+                setToAmount("");
+                setSwapRoute(null);
+              }}
+              className="swap-token-select"
+            >
+              {Object.keys(TOKEN_REGISTRY)
+                .filter((key) => {
+                  const balance = tokenBalances[key];
+                  return balance && parseFloat(balance) > 0;
+                })
+                .map((key) => {
+                  const token = TOKEN_REGISTRY[key];
+                  return (
+                    <option key={key} value={key}>
+                      {token.logo} {token.symbol}
+                    </option>
+                  );
+                })}
+            </select>
+          </div>
         </div>
         <div className="swap-usd-value">
           {fromAmount && parseFloat(fromAmount) > 0 ? `≈ $${(parseFloat(fromAmount) * (fromToken === "ETH" || fromToken === "WETH" ? 4681 : 1)).toFixed(2)}` : '≈ $0.00'}
@@ -733,31 +735,33 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
             }}
             className="swap-amount-input"
           />
-          <select
-            value={toToken}
-            onChange={(e) => {
-              const newToken = e.target.value;
-              setToToken(newToken);
-              setToAmount("");
-              setFromAmount("");
-              setSwapRoute(null);
-            }}
-            className="swap-token-select"
-          >
-            {Object.keys(TOKEN_REGISTRY)
-              .filter((key) => {
-                const token = TOKEN_REGISTRY[key];
-                return token.availableOnCurve;
-              })
-              .map((key) => {
-                const token = TOKEN_REGISTRY[key];
-                return (
-                  <option key={key} value={key}>
-                    {token.logo} {token.symbol}
-                  </option>
-                );
-              })}
-          </select>
+          <div className="swap-token-select-wrapper">
+            <select
+              value={toToken}
+              onChange={(e) => {
+                const newToken = e.target.value;
+                setToToken(newToken);
+                setToAmount("");
+                setFromAmount("");
+                setSwapRoute(null);
+              }}
+              className="swap-token-select"
+            >
+              {Object.keys(TOKEN_REGISTRY)
+                .filter((key) => {
+                  const token = TOKEN_REGISTRY[key];
+                  return token.availableOnCurve;
+                })
+                .map((key) => {
+                  const token = TOKEN_REGISTRY[key];
+                  return (
+                    <option key={key} value={key}>
+                      {token.logo} {token.symbol}
+                    </option>
+                  );
+                })}
+            </select>
+          </div>
         </div>
         <div className="swap-usd-value">
           {toAmount && parseFloat(toAmount) > 0 ? `≈ $${(parseFloat(toAmount) * (toToken === "ETH" || toToken === "WETH" ? 4681 : 1)).toFixed(2)}` : '≈ $0.00'}

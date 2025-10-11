@@ -76,31 +76,56 @@
   color: rgba(255, 255, 255, 0.15);
 }
 
+.swap-token-select-wrapper {
+  position: relative;
+  width: 110px;
+  border-radius: 980px;
+  overflow: hidden;
+}
+
+.swap-token-select-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  width: 12px;
+  height: 8px;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(0deg);
+  transition: transform 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23ffffffb3' d='M6 8a.75.75 0 0 1-.53-.22l-5-5a.75.75 0 1 1 1.06-1.06L6 6.94 10.47 1.7a.75.75 0 0 1 1.06 1.06l-5 5A.75.75 0 0 1 6 8Z'/%3E%3C/svg%3E");
+  background-size: 12px 8px;
+  background-repeat: no-repeat;
+}
+
+.swap-token-select-wrapper:hover::after {
+  transform: translateY(-50%) rotate(0deg); /* arrow stays visible, no change */
+}
+
+.swap-token-select-wrapper:focus-within::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
 .swap-token-select {
-  background: rgba(255, 255, 255, 0.05);
+  width: 100%;
+  padding: 8px 32px 8px 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 980px;
+  background: rgba(255, 255, 255, 0.05);
   color: white;
   font-size: 14px;
   font-weight: 500;
-  padding: 10px 16px 10px 24px; /* More padding on left to center text, accounting for arrow */
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'Inter', sans-serif;
-  width: 110px; /* Fixed smaller width */
   text-align: center;
   text-align-last: center;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.swap-token-select option {
-  background: #000000;
-  color: white;
-  padding: 8px 15px; /* Add horizontal padding to center text */
-  text-align: left;
-
-}
-
-.swap-token-select:hover {
+.swap-token-select-wrapper:hover .swap-token-select {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
 }
@@ -112,6 +137,12 @@
 }
 
 /* For webkit browsers (Chrome, Safari, Edge) - style the dropdown list */
+.swap-token-select option {
+  background: #000000;
+  color: #ffffff;
+  text-align: left;
+}
+
 .swap-token-select option:hover {
   background: rgba(255, 255, 255, 0.1);
 }
@@ -124,12 +155,11 @@
 
 .swap-direction-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start; /* Changed from center to flex-start */
   margin: -4px 0;
   position: relative;
   z-index: 10;
-  padding-left: 0; /* Remove any left padding */
-  margin-left: -8px; /* Shift slightly left to align with input fields */
+  padding-left: 20px; /* Add padding to position the button */
 }
 
 .swap-direction-button {

@@ -260,7 +260,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       const usdyPool = curve.getPool(USDC_RUSDY_POOL_ID);
       if (!usdyPool) throw new Error("USDC/rUSDY pool not found");
 
-      setStatus("Checking USDC balance...");
+      setStatus("Checking rUSDY balance...");
 
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const usdcContract = new ethers.Contract(
@@ -278,24 +278,24 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       if (balance.lt(requiredAmount)) {
         throw new Error(
-          `Insufficient USDC balance. You have ${ethers.utils.formatUnits(
+          `Insufficient rUSDY balance. You have ${ethers.utils.formatUnits(
             balance,
             6
           )} but need ${amount}`
         );
       }
 
-      setStatus("Checking USDC approval...");
+      setStatus("Checking rUSDY approval...");
 
       const poolAddress = usdyPool.address;
       const currentAllowance = await usdcContract.allowance(account, poolAddress);
 
       if (currentAllowance.lt(requiredAmount)) {
-        setStatus("Requesting USDC approval...");
+        setStatus("Requesting rUSDY approval...");
         const approveTx = await usdcContract.approve(poolAddress, requiredAmount);
         setStatus("Waiting for approval confirmation...");
         await approveTx.wait();
-        setStatus("USDC approved successfully!");
+        setStatus("rUSDY approved successfully!");
       }
 
       setStatus("Executing deposit...");
@@ -309,7 +309,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       setStatus("Deposit completed successfully! 🎉");
       if (onShowToast)
-        onShowToast("success", "Successfully deposited USDC!", depositTx);
+        onShowToast("success", "Successfully deposited rUSDY!", depositTx);
 
       const newUsdcBalance = await usdcContract.balanceOf(account);
       setUsdcBalance(ethers.utils.formatUnits(newUsdcBalance, 6));
@@ -377,7 +377,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       setStatus("Withdrawal completed successfully! 🎉");
       if (onShowToast)
-        onShowToast("success", "Successfully withdrew USDC!", withdrawTx);
+        onShowToast("success", "Successfully withdrew rUSDY!", withdrawTx);
 
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const usdcContract = new ethers.Contract(
@@ -428,7 +428,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       <div className="stake-container">
         {/* Pool Detail Card */}
         <div className="pool-detail-card">
-          <h3 className="pool-title">USDC/rUSDY Liquidity Pool</h3>
+          <h3 className="pool-title">rUSDY/USDC Liquidity Pool</h3>
           <div className="pool-stats-grid">
             <div className="pool-stat">
               <span className="pool-stat-label">Total Liquidity</span>
@@ -503,7 +503,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
               Avail. {mode === "stake"
                 ? parseFloat(usdcBalance).toFixed(2)
                 : parseFloat(lpTokenBalance).toFixed(6)}{" "}
-              {mode === "stake" ? "USDC" : "LP"}
+              {mode === "stake" ? "rUSDY" : "LP"}
             </span>
             <button onClick={setMaxAmount} className="stake-max-button">
               MAX

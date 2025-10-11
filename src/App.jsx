@@ -44,20 +44,40 @@ function App() {
   }
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', overflow: 'visible' }}>
+    <div style={{ position: 'relative', minHeight: '100vh', overflow: 'visible', background: '#000000' }}>
       <div style={{ pointerEvents: 'none' }}>
         <Orb hoverIntensity={0.5} rotateOnHover={true} hue={0} forceHoverState={false} />
       </div>
 
       <Navbar onShowToast={showToast} />
 
-      <div className="app-container">
-        <div style={{ width: 311, flexShrink: 0, zIndex: 2, position: 'sticky', display: 'flex', flexDirection: 'row'}}>
-          <Header />
-          <Sidebar activePage={activePage} setActivePage={setActivePage}/>
-        </div>
+      {/* Main container with proper flexbox */}
+      <div className="app-container" style={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: '80px',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        gap: '16px',
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto'
+      }}>
+        
+        {/* Header */}
+        <Header />
+        
+        {/* Swap/Stake Toggle Buttons */}
+        <Sidebar activePage={activePage} setActivePage={setActivePage} />
 
-        <main className="main-content" style={{ position: 'relative', zIndex: 2, overflow: 'visible', marginTop: '140px' }}>
+        {/* Main Content */}
+        <main style={{ 
+          width: '100%',
+          maxWidth: '600px',
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
           {activePage === 'swap' && (
             <SwapInterface onShowToast={showToast} onSwapSuccess={handleSwapSuccess} />
           )}

@@ -1,5 +1,4 @@
 .sidebar-box {
-  display: flex;
   width: 280px;
   height: fit-content;
   flex-shrink: 0;
@@ -7,33 +6,33 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(20px);
-  position: fixed;       /* instead of sticky */
-  top: 100px;            /* same distance from top */
-  left: 50%;             /* horizontal center */
-  transform: translateX(-50%);
+  position: sticky;
+  top: 100px;
   padding: 8px;
-  z-index: 10;           /* float above the chaos */
+  z-index: 10;
+  margin: 0 auto; /* Center horizontally within flex container */
 }
-
 
 .buttons {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  gap: 4px;
+  width: 100%;
 }
 
 .swap-button,
 .deposit-button {
-  width: 132px;
+  flex: 1; /* Equal width buttons */
   display: flex;
   padding: 14px 20px;
-  justify-content: center;   /* center the text horizontally */
-  align-items: center;       /* center vertically */
+  justify-content: center;
+  align-items: center;
   border-radius: 10px;
   border: none;
   background: transparent;
   cursor: pointer;
   transition: all 0.15s ease;
+  min-width: 0; /* Allow shrinking on small screens */
 }
 
 .swap-button:hover,
@@ -48,6 +47,7 @@
   font-size: 14px;
   font-weight: 500;
   margin: 0;
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 .swap-button.active,
@@ -60,20 +60,25 @@
   color: rgba(255, 255, 255, 0.95);
 }
 
+/* Responsive: Stack on smaller screens */
 @media (max-width: 1024px) {
   .sidebar-box {
     width: 100%;
+    max-width: 600px;
     position: static;
     margin-bottom: 24px;
   }
-  
-  .buttons {
-    flex-direction: row;
+}
+
+/* Extra small screens */
+@media (max-width: 640px) {
+  .sidebar-box {
+    width: calc(100% - 32px);
+    margin: 0 16px 24px;
   }
   
-  .swap-button,
-  .deposit-button {
-    flex: 1;
-    justify-content: center;
+  .s-text,
+  .d-text {
+    font-size: 13px;
   }
 }

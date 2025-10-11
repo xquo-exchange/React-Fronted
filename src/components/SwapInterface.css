@@ -7,10 +7,7 @@
   backdrop-filter: blur(20px);
   padding: 32px;
   color: white;
-  position: absolute;
-  top: 38%;
-  left: 33%;
-  transform: translate(-50%, -50%);
+  margin: 0 auto; /* Remove position: absolute */
 }
 
 .swap-interface-title {
@@ -92,6 +89,12 @@
   font-family: 'Inter', sans-serif;
 }
 
+.swap-token-select option {
+  background: #000000; /* Black background for dropdown options */
+  color: white; /* White text */
+  padding: 8px;
+}
+
 .swap-token-select:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
@@ -100,6 +103,12 @@
 .swap-token-select:focus {
   outline: none;
   border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* For webkit browsers (Chrome, Safari, Edge) - style the dropdown list */
+.swap-token-select option:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .swap-usd-value {

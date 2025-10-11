@@ -18,7 +18,7 @@ const TOKEN_REGISTRY = {
     decimals: 18,
     symbol: "ETH",
     name: "Ethereum",
-    logo: "⟠",
+    logo: "",
     availableOnCurve: true
   },
   WETH: {
@@ -26,7 +26,7 @@ const TOKEN_REGISTRY = {
     decimals: 18,
     symbol: "WETH",
     name: "Wrapped Ether",
-    logo: "⟠",
+    logo: "",
     availableOnCurve: true
   },
   USDC: {
@@ -34,7 +34,7 @@ const TOKEN_REGISTRY = {
     decimals: 6,
     symbol: "USDC",
     name: "USD Coin",
-    logo: "💵",
+    logo: "",
     availableOnCurve: true
   },
   USDT: {
@@ -42,7 +42,7 @@ const TOKEN_REGISTRY = {
     decimals: 6,
     symbol: "USDT",
     name: "Tether USD",
-    logo: "💵",
+    logo: "",
     availableOnCurve: true
   },
   DAI: {
@@ -50,7 +50,7 @@ const TOKEN_REGISTRY = {
     decimals: 18,
     symbol: "DAI",
     name: "Dai Stablecoin",
-    logo: "💵",
+    logo: "",
     availableOnCurve: true
   },
   rUSDY: {
@@ -58,7 +58,7 @@ const TOKEN_REGISTRY = {
     decimals: 18,
     symbol: "rUSDY",
     name: "Rebasing Ondo USD Yield",
-    logo: "🪙",
+    logo: "",
     availableOnCurve: true
   },
   WBTC: {
@@ -66,7 +66,7 @@ const TOKEN_REGISTRY = {
     decimals: 8,
     symbol: "WBTC",
     name: "Wrapped Bitcoin",
-    logo: "₿",
+    logo: "",
     availableOnCurve: true
   }
 };

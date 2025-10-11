@@ -8,13 +8,10 @@
   backdrop-filter: blur(20px);
   padding: 32px;
   color: white;
+  margin: 0 auto; /* Centered, not absolute */
   display: flex;
   flex-direction: column;
   gap: 24px;
-    position: absolute;
-  top: 50%;
-  left: 33%;
-  transform: translate(-50%, -50%);
 }
 
 /* Pool Detail Card */

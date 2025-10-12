@@ -89,27 +89,19 @@ function App() {
         >
           {activePage === 'swap' && (
             <>
-              <SwapInterface onShowToast={showToast} onSwapSuccess={handleSwapSuccess} />
-              {/* Stats SOTTO Swap */}
+              <SwapInterface/>
+            </>
+          )}
+
+          {activePage === 'stake' && (
+            <>
+              <StakeBox/>
               <div style={{ marginTop: 12 }}>
                 <CurvePoolStatistics />
               </div>
             </>
           )}
 
-          {activePage === 'stake' && (
-            <>
-              <StakeBox
-                onShowToast={showToast}
-                prefillAmount={swapToStakeAmount}
-                onPrefillUsed={() => setSwapToStakeAmount('')}
-              />
-              {/* Stats SOTTO Stake */}
-              <div style={{ marginTop: 12 }}>
-                <CurvePoolStatistics />
-              </div>
-            </>
-          )}
         </main>
       </div>
 

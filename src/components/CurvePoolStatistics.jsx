@@ -1,11 +1,14 @@
+// src/components/CurvePoolStatistics.jsx
 import React from 'react';
 import usePool from '../hooks/usePool.js';
-import "./curve_pool_statistics.css";
-
+// Se usi il CSS vicino al componente, assicurati che esista il file:
+import './curve_pool_statistics.css';
 
 function Stat({ label, value, suffix, fallback = '—' }) {
   const shown =
-    value == null || Number.isNaN(Number(value)) ? fallback : `${formatNumber(value)}${suffix || ''}`;
+    value == null || Number.isNaN(Number(value))
+      ? fallback
+      : `${formatNumber(value)}${suffix || ''}`;
   return (
     <div className="cps-stat">
       <div className="cps-stat-label">{label}</div>
@@ -31,7 +34,7 @@ export default function CurvePoolStatistics() {
   const { status, poolData, walletData } = usePool();
 
   if (status.loading) {
-    return <div className="cps-card">Caricamento pool… prova a respirare nel frattempo.</div>;
+    return <div className="cps-card">Caricamento pool… non premere F5 a caso.</div>;
   }
   if (status.error && !poolData) {
     return <div className="cps-card cps-error">Errore: {String(status.error)}</div>;
@@ -42,6 +45,19 @@ export default function CurvePoolStatistics() {
 
   return (
     <div className="cps-grid">
+      {/* Sorgente dati */}
+      <div className="cps-card" style={{ paddingBottom: 8 }}>
+        <div className="cps-row" style={{ justifyContent: 'space-between' }}>
+          <div className="cps-row-left">
+            {status.isMock ? 'Data source: Mock' : 'Data source: Live ✓'}
+          </div>
+          <div className="cps-row-right mono">
+            {status.lastUpdated ? new Date(status.lastUpdated).toLocaleTimeString() : ''}
+          </div>
+        </div>
+      </div>
+
+      {/* Header + KPI principali */}
       <div className="cps-card">
         <div className="cps-title">{pd.name || 'Curve Pool'}</div>
         <div className="cps-columns">
@@ -53,6 +69,7 @@ export default function CurvePoolStatistics() {
         </div>
       </div>
 
+      {/* Fee & Virtual Price */}
       <div className="cps-card">
         <div className="cps-subtitle">Fee & VP</div>
         <div className="cps-columns">
@@ -62,6 +79,7 @@ export default function CurvePoolStatistics() {
         </div>
       </div>
 
+      {/* VAPY */}
       <div className="cps-card">
         <div className="cps-subtitle">VAPY</div>
         <div className="cps-columns">
@@ -70,14 +88,20 @@ export default function CurvePoolStatistics() {
         </div>
       </div>
 
+      {/* Breakdown token del pool */}
       <div className="cps-card">
         <div className="cps-subtitle">Pool tokens</div>
         <div className="cps-list">
-          {(pd.tokens || []).map((t, i) => <TokenRow key={i} t={t} />)}
-          {(!pd.tokens || pd.tokens.length === 0) && <div className="cps-empty">Nessun dato token.</div>}
+          {(pd.tokens || []).map((t, i) => (
+            <TokenRow key={i} t={t} />
+          ))}
+          {(!pd.tokens || pd.tokens.length === 0) && (
+            <div className="cps-empty">Nessun dato token.</div>
+          )}
         </div>
       </div>
 
+      {/* Wallet summary */}
       <div className="cps-card">
         <div className="cps-subtitle">Wallet</div>
         <div className="cps-list">
@@ -106,16 +130,66 @@ export default function CurvePoolStatistics() {
         </div>
       </div>
 
+      {/* Contracts per utente */}
       <div className="cps-card">
-        <div className="cps-subtitle">Contracts</div>
+        <div className="cps-subtitle">Contracts (User)</div>
+        <div className="cps-list">
+          <div className="cps-row">
+            <div className="cps-row-left">LP token</div>
+            <div className="cps-row-right mono">
+              {wd.contracts?.lpTokenAddress || '—'}
+            </div>
+          </div>
+
+          <div className="cps-row">
+            <div className="cps-row-left">Allowance → Pool</div>
+            <div className="cps-row-right">
+              <span>
+                {wd.contracts?.allowanceToPool != null
+                  ? `${formatNumber(wd.contracts.allowanceToPool)} LP`
+                  : '—'}
+              </span>
+              {wd.contracts?.needsPoolApproval != null && (
+                <span className="cps-dot">
+                  {wd.contracts.needsPoolApproval ? '(needs approval)' : '(ok)'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="cps-row">
+            <div className="cps-row-left">Allowance → Gauge</div>
+            <div className="cps-row-right">
+              <span>
+                {wd.contracts?.allowanceToGauge != null
+                  ? `${formatNumber(wd.contracts.allowanceToGauge)} LP`
+                  : '—'}
+              </span>
+              {wd.contracts?.needsGaugeApproval != null && (
+                <span className="cps-dot">
+                  {wd.contracts.needsGaugeApproval ? '(needs approval)' : '(ok)'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Contracts statici del pool */}
+      <div className="cps-card">
+        <div className="cps-subtitle">Contracts (Pool)</div>
         <div className="cps-list">
           <div className="cps-row">
             <div className="cps-row-left">Pool</div>
-            <div className="cps-row-right mono">{pd.contracts?.poolAddress || '—'}</div>
+            <div className="cps-row-right mono">
+              {pd.contracts?.poolAddress || '—'}
+            </div>
           </div>
           <div className="cps-row">
             <div className="cps-row-left">Gauge</div>
-            <div className="cps-row-right mono">{pd.contracts?.gaugeAddress || '—'}</div>
+            <div className="cps-row-right mono">
+              {pd.contracts?.gaugeAddress || '—'}
+            </div>
           </div>
         </div>
       </div>

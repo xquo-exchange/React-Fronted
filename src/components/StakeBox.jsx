@@ -23,7 +23,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const autoHideTimer = useRef(null);
 
   const [mode, setMode] = useState("stake");
-  const [strategy, setStrategy] = useState("conservative"); // New: Strategy selection
+  const [strategy, setStrategy] = useState("enhanced"); // New: Strategy selection
   
   const [usdcBalance, setUsdcBalance] = useState("0");
   const [lpTokenBalance, setLpTokenBalance] = useState("0");
@@ -472,19 +472,11 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           <div className="strategy-selection">
             <h4 className="strategy-title">Select Strategy</h4>
             <div className="strategy-buttons">
-              <button
-                className={`strategy-btn ${strategy === "conservative" ? "active" : ""}`}
-                onClick={() => setStrategy("conservative")}
-              >
-                <div className="strategy-header">
-                  <span className="strategy-name">Conservative</span>
-                  <span className="strategy-apy">{CONSERVATIVE_APY}% APY</span>
-                </div>
-                <p className="strategy-desc">Lower risk, stable returns</p>
-              </button>
+              
               <button
                 className={`strategy-btn ${strategy === "enhanced" ? "active" : ""}`}
                 onClick={() => setStrategy("enhanced")}
+                
               >
                 <div className="strategy-header">
                   <span className="strategy-name">Enhanced</span>
@@ -492,6 +484,19 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
                 </div>
                 <p className="strategy-desc">Higher yields, managed risk</p>
               </button>
+
+              <button
+                className={`strategy-btn ${strategy === "conservative" ? "active" : ""}`}
+                onClick={() => setStrategy("conservative")}
+                disabled
+              >
+                <div className="strategy-header">
+                  <span className="strategy-name">Conservative</span>
+                  <span className="strategy-apy">{CONSERVATIVE_APY}% APY</span>
+                </div>
+                <p className="strategy-desc">Lower risk, stable returns</p>
+              </button>
+
             </div>
           </div>
         )}

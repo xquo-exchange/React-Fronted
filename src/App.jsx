@@ -80,6 +80,7 @@ function App() {
         }}>
           {activePage === 'swap' && (
             <SwapInterface onShowToast={showToast} onSwapSuccess={handleSwapSuccess} />
+            
           )}
 
           {activePage === 'stake' && (

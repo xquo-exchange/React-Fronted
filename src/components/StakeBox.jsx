@@ -368,7 +368,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       setStatus("Executing withdrawal...");
 
-      const withdrawTx = await usdyPool.withdraw(amount, 0.1);
+      const withdrawTx = await usdyPool.withdrawImbalance([amount, ], 0.1);
 
       setStatus("Waiting for transaction confirmation...");
       const receipt = await rpcProvider.waitForTransaction(withdrawTx);

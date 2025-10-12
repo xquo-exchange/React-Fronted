@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useState } from 'react';
 import './App.css';
 
@@ -10,6 +11,9 @@ import Toast from './components/Toast';
 import Orb from './components/Orb';
 import GalaxyLanding from './components/GalaxyLanding';
 import { useWallet } from './hooks/useWallet';
+
+// NUOVO: stats del pool
+import CurvePoolStatistics from './components/CurvePoolStatistics';
 
 function App() {
   const [toast, setToast] = useState(null);
@@ -30,7 +34,7 @@ function App() {
   if (!isConnected) {
     return (
       <>
-       <GalaxyLanding onConnect={connectWallet} />
+        <GalaxyLanding onConnect={connectWallet} />
         {toast && (
           <Toast
             type={toast.type}
@@ -52,43 +56,59 @@ function App() {
       <Navbar onShowToast={showToast} />
 
       {/* Main container with proper flexbox */}
-      <div className="app-container" style={{ 
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: '80px',
-        paddingLeft: '24px',
-        paddingRight: '24px',
-        gap: '16px',
-        width: '100%',
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-        
+      <div
+        className="app-container"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          paddingTop: '80px',
+          paddingLeft: '24px',
+          paddingRight: '24px',
+          gap: '16px',
+          width: '100%',
+          maxWidth: '1200px',
+          margin: '0 auto',
+        }}
+      >
         {/* Header */}
         <Header />
-        
+
         {/* Swap/Stake Toggle Buttons */}
         <Sidebar activePage={activePage} setActivePage={setActivePage} />
 
         {/* Main Content */}
-        <main style={{ 
-          width: '100%',
-          maxWidth: '600px',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
+        <main
+          style={{
+            width: '100%',
+            maxWidth: '600px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}
+        >
           {activePage === 'swap' && (
-            <SwapInterface onShowToast={showToast} onSwapSuccess={handleSwapSuccess} />
-            
+            <>
+              <SwapInterface onShowToast={showToast} onSwapSuccess={handleSwapSuccess} />
+              {/* Stats SOTTO Swap */}
+              <div style={{ marginTop: 12 }}>
+                <CurvePoolStatistics />
+              </div>
+            </>
           )}
 
           {activePage === 'stake' && (
-            <StakeBox 
-              onShowToast={showToast} 
-              prefillAmount={swapToStakeAmount}
-              onPrefillUsed={() => setSwapToStakeAmount('')}
-            />
+            <>
+              <StakeBox
+                onShowToast={showToast}
+                prefillAmount={swapToStakeAmount}
+                onPrefillUsed={() => setSwapToStakeAmount('')}
+              />
+              {/* Stats SOTTO Stake */}
+              <div style={{ marginTop: 12 }}>
+                <CurvePoolStatistics />
+              </div>
+            </>
           )}
         </main>
       </div>

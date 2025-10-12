@@ -1,0 +1,66 @@
+.cps-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+}
+
+.cps-card {
+  grid-column: span 12;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.cps-error { border-color: #ff5a5a; }
+
+.cps-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.cps-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.cps-columns {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cps-stat {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.cps-stat-label {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.cps-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cps-list { display: flex; flex-direction: column; gap: 8px; }
+.cps-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cps-row-left { font-weight: 600; }
+.cps-row-right { display: flex; gap: 6px; align-items: center; }
+.cps-dot { opacity: 0.6; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+@media (max-width: 900px) {
+  .cps-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

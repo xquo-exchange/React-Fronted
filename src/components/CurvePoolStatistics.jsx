@@ -125,11 +125,7 @@ export default function CurvePoolStatistics() {
               </div>
             </div>
 
-            <div className="risk-link">
-              <a href="https://resources.curve.fi/base-features/understanding-curve" target="_blank" rel="noopener noreferrer">
-                ℹ️ Risks of using this pool
-              </a>
-            </div>
+
           </div>
 
           {/* Right Column */}

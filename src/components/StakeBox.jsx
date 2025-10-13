@@ -23,15 +23,21 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const autoHideTimer = useRef(null);
 
   const [mode, setMode] = useState("stake");
-  const [strategy, setStrategy] = useState("enhanced"); // New: Strategy selection
+  const [strategy, setStrategy] = useState("enhanced");
   
   const [usdcBalance, setUsdcBalance] = useState("0");
   const [lpTokenBalance, setLpTokenBalance] = useState("0");
   
+  // Pool loading states
+  const [isPoolLoading, setIsPoolLoading] = useState(true);
+  const [poolError, setPoolError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const retryTimerRef = useRef(null);
+  
   // Pool stats
   const [poolStats, setPoolStats] = useState({
     totalLiquidity: "0",
-    apy: "0",
+    apy: "4",
     userPositionUSD: "0"
   });
 
@@ -40,8 +46,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   );
   
   // APY rates for strategies
-  const CONSERVATIVE_APY = 8.5; // 8.5%
-  const ENHANCED_APY = 12.5; // 12.5%
+  const BASE_APY = 4; // 4% base APY from asset
+  const CONSERVATIVE_APY = 5; // 5% (4% base + 1% strategy)
+  const ENHANCED_APY = 6.37; // 6.37% (4% base + 2.37% weekly boost)
   const EARLY_WITHDRAWAL_FEE = 0.5; // 0.5%
 
   // Helper function to parse error messages
@@ -112,27 +119,37 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     fetchUsdcBalance();
   }, [account]);
 
-  // Fetch LP token balance
+  // Fetch LP token balance with retry logic
   useEffect(() => {
     const fetchLpBalance = async () => {
       if (!account || !isConnected) {
         setLpTokenBalance("0");
+        setIsPoolLoading(false);
         return;
       }
 
       try {
+        setIsPoolLoading(true);
+        console.log(`🔄 [Attempt ${retryCount + 1}] Fetching LP balance and pool data...`);
+
         await curve.init(
           "Web3",
           { externalProvider: window.ethereum, network: "mainnet" },
           { gasPrice: 0, chainId: 1 }
         );
+        
+        console.log("⏳ Fetching pool data from Curve...");
         await curve.stableNgFactory.fetchPools();
+        
+        // Wait a bit for pool data to be fully available
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         const usdyPool = curve.getPool(USDC_RUSDY_POOL_ID);
         if (!usdyPool) {
-          console.error("Pool not found");
-          return;
+          throw new Error("Pool not found after fetching");
         }
+
+        console.log("✅ Pool data loaded successfully!");
 
         const tokenBalances = await usdyPool.wallet.lpTokenBalances();
         const lpBalance = tokenBalances["lpToken"] || "0";
@@ -142,8 +159,8 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         try {
           const tvl = await usdyPool.stats.totalLiquidity();
           
-          // Get virtual price of LP token (how much 1 LP token is worth in pool's base currency)
-          let lpTokenPrice = 1; // Default fallback
+          // Get virtual price of LP token
+          let lpTokenPrice = 1;
           try {
             const virtualPrice = await usdyPool.stats.virtualPrice();
             lpTokenPrice = parseFloat(virtualPrice) || 1;
@@ -155,21 +172,53 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           
           setPoolStats({
             totalLiquidity: tvl || "0",
-            apy: strategy === "conservative" ? CONSERVATIVE_APY.toString() : ENHANCED_APY.toString(),
+            apy: BASE_APY.toString(),
             userPositionUSD: userPositionUSD.toFixed(2),
-            lpTokenPrice: lpTokenPrice.toFixed(4) // Store LP token price
+            lpTokenPrice: lpTokenPrice.toFixed(4)
           });
         } catch (error) {
           console.error("Error fetching pool stats:", error);
         }
+
+        // Success - clear retry timer and reset states
+        setIsPoolLoading(false);
+        setPoolError(null);
+        setRetryCount(0);
+        if (retryTimerRef.current) {
+          clearTimeout(retryTimerRef.current);
+          retryTimerRef.current = null;
+        }
+
       } catch (error) {
-        console.error("Error fetching LP balance:", error);
+        console.error(`❌ [Attempt ${retryCount + 1}] Error fetching LP balance:`, error.message);
+        
+        // Max 6 retries (1 minute total)
+        if (retryCount < 6) {
+          setPoolError(`Loading pool data... (Attempt ${retryCount + 1}/6)`);
+          
+          console.log(`⏰ Retrying in 10 seconds... (Next attempt: ${retryCount + 2}/6)`);
+          retryTimerRef.current = setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+          }, 10000);
+        } else {
+          setPoolError("Failed to load pool data. Please refresh the page.");
+          setIsPoolLoading(false);
+          console.error("❌ Max retries reached. Please refresh the page.");
+        }
+        
         setLpTokenBalance("0");
       }
     };
 
     fetchLpBalance();
-  }, [account, isConnected, strategy, usdcBalance]);
+
+    // Cleanup retry timer on unmount
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, [account, isConnected, usdcBalance, retryCount]);
 
   useEffect(() => {
     if (isConnected && showWarning) setShowWarning(false);
@@ -179,9 +228,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   useEffect(() => {
     if (prefillAmount && prefillAmount !== '') {
       setAmount(prefillAmount);
-      setMode('stake'); // Switch to stake mode
+      setMode('stake');
       if (onPrefillUsed) {
-        onPrefillUsed(); // Clear the prefill so it doesn't happen again
+        onPrefillUsed();
       }
     }
   }, [prefillAmount, onPrefillUsed]);
@@ -214,7 +263,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     if (!amount || parseFloat(amount) <= 0) return { usdc: 0, fee: 0, net: 0 };
     
     const lpAmount = parseFloat(amount);
-    const lpPrice = parseFloat(poolStats.lpTokenPrice) || 1; // Use stored LP token price
+    const lpPrice = parseFloat(poolStats.lpTokenPrice) || 1;
     const estimatedUSDC = lpAmount * lpPrice;
     const fee = estimatedUSDC * (EARLY_WITHDRAWAL_FEE / 100);
     const netAmount = estimatedUSDC - fee;
@@ -234,7 +283,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     }
   };
 
-  // Execute Deposit (USDC → LP tokens)
+  // Execute Deposit (rUSDY → LP tokens)
   const executeDeposit = async () => {
     if (!account || !window.ethereum) {
       if (onShowToast) onShowToast("error", "Please connect your wallet");
@@ -263,24 +312,28 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       setStatus("Checking rUSDY balance...");
 
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const usdcContract = new ethers.Contract(
-        USDC_ADDRESS,
+      
+      // USE RUSDY ADDRESS, NOT USDC!
+      const rusdyContract = new ethers.Contract(
+        RUSDY_ADDRESS,
         [
           "function balanceOf(address) view returns (uint256)",
           "function allowance(address owner, address spender) view returns (uint256)",
           "function approve(address spender, uint256 amount) returns (bool)",
+          "function decimals() view returns (uint8)"
         ],
         provider.getSigner()
       );
 
-      const balance = await usdcContract.balanceOf(account);
-      const requiredAmount = ethers.utils.parseUnits(amount, 6);
+      const balance = await rusdyContract.balanceOf(account);
+      const decimals = await rusdyContract.decimals();
+      const requiredAmount = ethers.utils.parseUnits(amount, decimals);
 
       if (balance.lt(requiredAmount)) {
         throw new Error(
           `Insufficient rUSDY balance. You have ${ethers.utils.formatUnits(
             balance,
-            6
+            decimals
           )} but need ${amount}`
         );
       }
@@ -288,11 +341,11 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       setStatus("Checking rUSDY approval...");
 
       const poolAddress = usdyPool.address;
-      const currentAllowance = await usdcContract.allowance(account, poolAddress);
+      const currentAllowance = await rusdyContract.allowance(account, poolAddress);
 
       if (currentAllowance.lt(requiredAmount)) {
         setStatus("Requesting rUSDY approval...");
-        const approveTx = await usdcContract.approve(poolAddress, requiredAmount);
+        const approveTx = await rusdyContract.approve(poolAddress, requiredAmount);
         setStatus("Waiting for approval confirmation...");
         await approveTx.wait();
         setStatus("rUSDY approved successfully!");
@@ -300,7 +353,8 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       setStatus("Executing deposit...");
 
-      const depositTx = await usdyPool.deposit([amount, "0"], 0.1);
+      // CORRECT DEPOSIT CALL - Single-sided liquidity (rUSDY only)
+      const depositTx = await usdyPool.deposit(["0", amount], 0.1);
 
       setStatus("Waiting for transaction confirmation...");
       const receipt = await rpcProvider.waitForTransaction(depositTx);
@@ -311,8 +365,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       if (onShowToast)
         onShowToast("success", "Successfully deposited rUSDY!", depositTx);
 
-      const newUsdcBalance = await usdcContract.balanceOf(account);
-      setUsdcBalance(ethers.utils.formatUnits(newUsdcBalance, 6));
+      // Update balances
+      const newRusdyBalance = await rusdyContract.balanceOf(account);
+      setUsdcBalance(ethers.utils.formatUnits(newRusdyBalance, decimals));
 
       const tokenBalances = await usdyPool.wallet.lpTokenBalances();
       setLpTokenBalance(tokenBalances["lpToken"] || "0");
@@ -429,20 +484,41 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         {/* Pool Detail Card */}
         <div className="pool-detail-card">
           <h3 className="pool-title">rUSDY/USDC Liquidity Pool</h3>
-          <div className="pool-stats-grid">
-            <div className="pool-stat">
-              <span className="pool-stat-label">Total Liquidity</span>
-              <span className="pool-stat-value">${parseFloat(poolStats.totalLiquidity).toLocaleString()}</span>
+          
+          {isPoolLoading ? (
+            <div className="pool-loading-state">
+              <div className="status-spinner">
+                <div className="spinner"></div>
+              </div>
+              <p className="pool-loading-text">{poolError || "Loading pool data..."}</p>
             </div>
-            <div className="pool-stat">
-              <span className="pool-stat-label">Your Position</span>
-              <span className="pool-stat-value">${poolStats.userPositionUSD}</span>
+          ) : poolError ? (
+            <div className="pool-error-state">
+              <p className="pool-error-text">⚠️ {poolError}</p>
+              <button 
+                className="btn-secondary" 
+                onClick={() => window.location.reload()}
+                style={{ marginTop: '10px' }}
+              >
+                Refresh Page
+              </button>
             </div>
-            <div className="pool-stat">
-              <span className="pool-stat-label">Base APY</span>
-              <span className="pool-stat-value apy-highlight">{poolStats.apy}%</span>
+          ) : (
+            <div className="pool-stats-grid">
+              <div className="pool-stat">
+                <span className="pool-stat-label">Total Liquidity</span>
+                <span className="pool-stat-value">${parseFloat(poolStats.totalLiquidity).toLocaleString()}</span>
+              </div>
+              <div className="pool-stat">
+                <span className="pool-stat-label">Your Position</span>
+                <span className="pool-stat-value">${poolStats.userPositionUSD}</span>
+              </div>
+              <div className="pool-stat">
+                <span className="pool-stat-label">Base APY (from asset)</span>
+                <span className="pool-stat-value apy-highlight">{poolStats.apy}%</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Mode Switch Buttons */}
@@ -480,7 +556,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
               >
                 <div className="strategy-header">
                   <span className="strategy-name">Enhanced</span>
-                  <span className="strategy-apy">{ENHANCED_APY}% APY</span>
+                  <span className="strategy-apy">+{(ENHANCED_APY - BASE_APY).toFixed(2)}% APY</span>
                 </div>
                 <p className="strategy-desc">Higher yields, managed risk</p>
               </button>
@@ -492,7 +568,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
               >
                 <div className="strategy-header">
                   <span className="strategy-name">Conservative</span>
-                  <span className="strategy-apy">{CONSERVATIVE_APY}% APY</span>
+                  <span className="strategy-apy">+{(CONSERVATIVE_APY - BASE_APY).toFixed(2)}% APY</span>
                 </div>
                 <p className="strategy-desc">Lower risk, stable returns</p>
               </button>
@@ -590,7 +666,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         <button
           className="stake-action-button"
           onClick={handleActionClick}
-          disabled={isLoading || !amount || parseFloat(amount) <= 0}
+          disabled={isLoading || !amount || parseFloat(amount) <= 0 || isPoolLoading}
         >
           <div className="stake-step-indicator">1</div>
           <span className="stake-button-text">

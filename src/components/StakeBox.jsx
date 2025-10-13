@@ -439,7 +439,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
               <span className="pool-stat-value">${poolStats.userPositionUSD}</span>
             </div>
             <div className="pool-stat">
-              <span className="pool-stat-label">Current APY</span>
+              <span className="pool-stat-label">Base APY</span>
               <span className="pool-stat-value apy-highlight">{poolStats.apy}%</span>
             </div>
           </div>

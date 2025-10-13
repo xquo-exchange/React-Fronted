@@ -11,7 +11,7 @@ const el = document.getElementById('root');
 createRoot(el).render(
   <StrictMode>
     <WalletProvider>
-      <PoolProvider poolId="crvusd-usdc-factory-431">
+      <PoolProvider poolId="factory-stable-ng-161">
         <App />
       </PoolProvider>
     </WalletProvider>

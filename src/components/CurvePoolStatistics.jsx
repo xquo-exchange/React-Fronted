@@ -1,210 +1,266 @@
 // src/components/CurvePoolStatistics.jsx
-import React from 'react';
-import usePool from '../hooks/usePool.js';
-// Se usi il CSS vicino al componente, assicurati che esista il file:
+import React, { useState } from 'react';
+import { usePool } from '../contexts/PoolContext';
 import './curve_pool_statistics.css';
 
-function Stat({ label, value, suffix, fallback = '—' }) {
-  const shown =
-    value == null || Number.isNaN(Number(value))
-      ? fallback
-      : `${formatNumber(value)}${suffix || ''}`;
-  return (
-    <div className="cps-stat">
-      <div className="cps-stat-label">{label}</div>
-      <div className="cps-stat-value">{shown}</div>
-    </div>
-  );
-}
-
-function TokenRow({ t }) {
-  return (
-    <div className="cps-row">
-      <div className="cps-row-left">{t.symbol}</div>
-      <div className="cps-row-right">
-        <span>{formatNumber(t.amount)}</span>
-        <span className="cps-dot">•</span>
-        <span>{t.percentage != null ? `${t.percentage}%` : '—'}</span>
-      </div>
-    </div>
-  );
-}
-
 export default function CurvePoolStatistics() {
-  const { status, poolData, walletData } = usePool();
+  const [activeTab, setActiveTab] = useState('pool');
+  
+  let poolContext;
+  try {
+    poolContext = usePool();
+  } catch (error) {
+    return (
+      <div className="pool-container">
+        <div className="tab-content">
+          <div style={{ textAlign: 'center', padding: '40px', color: '#ff5a5a' }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
+              Error loading pool data
+            </div>
+            <div style={{ fontSize: '14px', opacity: 0.8 }}>
+              {error.message || 'Failed to connect to pool provider'}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { status, poolData, walletData } = poolContext;
 
   if (status.loading) {
-    return <div className="cps-card">Caricamento pool… non premere F5 a caso.</div>;
-  }
-  if (status.error && !poolData) {
-    return <div className="cps-card cps-error">Errore: {String(status.error)}</div>;
+    return (
+      <div className="pool-container">
+        <div className="tab-content">
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '16px', opacity: 0.8 }}>Loading pool data...</div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const pd = poolData || {};
+  if (status.error || !poolData) {
+    return (
+      <div className="pool-container">
+        <div className="tab-content">
+          <div style={{ textAlign: 'center', padding: '40px', color: '#ff5a5a' }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
+              Failed to load pool data
+            </div>
+            <div style={{ fontSize: '14px', opacity: 0.8 }}>
+              {status.error || 'Unknown error'}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const pd = poolData;
   const wd = walletData || {};
+  const currentBoost = '0x';
 
   return (
-    <div className="cps-grid">
-      {/* Sorgente dati */}
-      <div className="cps-card" style={{ paddingBottom: 8 }}>
-        <div className="cps-row" style={{ justifyContent: 'space-between' }}>
-          <div className="cps-row-left">
-            {status.isMock ? 'Data source: Mock' : 'Data source: Live ✓'}
-          </div>
-          <div className="cps-row-right mono">
-            {status.lastUpdated ? new Date(status.lastUpdated).toLocaleTimeString() : ''}
-          </div>
+    <div className="pool-container">
+      {/* Header Tabs */}
+      <div className="tabs">
+        <div
+          className={`tab ${activeTab === 'pool' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pool')}
+        >
+          POOL DETAILS
+        </div>
+        <div
+          className={`tab ${activeTab === 'your' ? 'active' : ''}`}
+          onClick={() => setActiveTab('your')}
+        >
+          YOUR DETAILS
+        </div>
+        <div
+          className={`tab ${activeTab === 'advanced' ? 'active' : ''}`}
+          onClick={() => setActiveTab('advanced')}
+        >
+          ADVANCED
         </div>
       </div>
 
-      {/* Header + KPI principali */}
-      <div className="cps-card">
-        <div className="cps-title">{pd.name || 'Curve Pool'}</div>
-        <div className="cps-columns">
-          <Stat label="TVL" value={pd.stats?.usdTotal} suffix=" $" />
-          <Stat label="Volume 24h" value={pd.stats?.dailyUSDVolume} suffix=" $" />
-          <Stat label="LP Staked" value={pd.stats?.totalLPTokensStaked} />
-          <Stat label="% Staked" value={pd.stats?.stakedPercent} suffix="%" />
-          <Stat label="Utilization" value={pd.stats?.liquidityUtilization} suffix="%" />
-        </div>
-      </div>
+      {/* POOL DETAILS TAB */}
+      {activeTab === 'pool' && (
+        <div className="tab-content pool-details-grid">
+          {/* Left Column */}
+          <div className="pool-details-left">
+            <h3 className="section-title">Currency reserves</h3>
+            {(pd.tokens || []).map((token, index) => (
+              <div key={index} className="reserve">
+                <div className="token-info">
+                  <div className="reserve-name">{token.symbol}</div>
+                </div>
+                <div className="token-values">
+                  <div className="reserve-balance">{formatNumber(token.amount, 0)}</div>
+                  <div className="reserve-percent">{formatNumber(token.percentage, 1)}%</div>
+                </div>
+              </div>
+            ))}
 
-      {/* Fee & Virtual Price */}
-      <div className="cps-card">
-        <div className="cps-subtitle">Fee & VP</div>
-        <div className="cps-columns">
-          <Stat label="Swap fee" value={pd.fees?.fee} suffix="%" />
-          <Stat label="DAO fee" value={pd.fees?.daoFee} suffix="%" />
-          <Stat label="Virtual price" value={pd.fees?.virtualPrice} />
-        </div>
-      </div>
+            <div className="total-line">
+              <span>USD total</span>
+              <span>${formatNumber(pd.stats?.usdTotal, 0)}</span>
+            </div>
 
-      {/* VAPY */}
-      <div className="cps-card">
-        <div className="cps-subtitle">VAPY</div>
-        <div className="cps-columns">
-          <Stat label="Daily" value={pd.vapy?.daily} suffix="%" />
-          <Stat label="Weekly" value={pd.vapy?.weekly} suffix="%" />
-        </div>
-      </div>
-
-      {/* Breakdown token del pool */}
-      <div className="cps-card">
-        <div className="cps-subtitle">Pool tokens</div>
-        <div className="cps-list">
-          {(pd.tokens || []).map((t, i) => (
-            <TokenRow key={i} t={t} />
-          ))}
-          {(!pd.tokens || pd.tokens.length === 0) && (
-            <div className="cps-empty">Nessun dato token.</div>
-          )}
-        </div>
-      </div>
-
-      {/* Wallet summary */}
-      <div className="cps-card">
-        <div className="cps-subtitle">Wallet</div>
-        <div className="cps-list">
-          <div className="cps-row">
-            <div className="cps-row-left">Address</div>
-            <div className="cps-row-right mono">{wd.address || '—'}</div>
-          </div>
-          {(wd.tokenBalances || []).map((b, i) => (
-            <div className="cps-row" key={i}>
-              <div className="cps-row-left">{b.symbol}</div>
-              <div className="cps-row-right">
-                <span>{formatNumber(b.amount)}</span>
-                <span className="cps-dot">•</span>
-                <span>{b.usd != null ? `${formatNumber(b.usd)} $` : '—'}</span>
+            <div className="vapy-box">
+              <div className="vapy-header">
+                <span>Base vAPY</span>
+                <a href="https://resources.curve.fi/reward-gauges/understanding-gauges" target="_blank" rel="noopener noreferrer">
+                  Learn more
+                </a>
+              </div>
+              <div className="vapy-values">
+                <span>Daily</span>
+                <span>{formatNumber(pd.vapy?.daily, 2)}%</span>
+              </div>
+              <div className="vapy-values">
+                <span>Weekly</span>
+                <span>{formatNumber(pd.vapy?.weekly, 2)}%</span>
               </div>
             </div>
-          ))}
-          <div className="cps-row">
-            <div className="cps-row-left">Staked</div>
-            <div className="cps-row-right">{formatNumber(wd.stakedAmount)} LP</div>
-          </div>
-          <div className="cps-row">
-            <div className="cps-row-left">Unstaked</div>
-            <div className="cps-row-right">{formatNumber(wd.unstakedAmount)} LP</div>
-          </div>
-        </div>
-      </div>
 
-      {/* Contracts per utente */}
-      <div className="cps-card">
-        <div className="cps-subtitle">Contracts (User)</div>
-        <div className="cps-list">
-          <div className="cps-row">
-            <div className="cps-row-left">LP token</div>
-            <div className="cps-row-right mono">
-              {wd.contracts?.lpTokenAddress || '—'}
+            <div className="risk-link">
+              <a href="https://resources.curve.fi/base-features/understanding-curve" target="_blank" rel="noopener noreferrer">
+                ℹ️ Risks of using this pool
+              </a>
             </div>
           </div>
 
-          <div className="cps-row">
-            <div className="cps-row-left">Allowance → Pool</div>
-            <div className="cps-row-right">
-              <span>
-                {wd.contracts?.allowanceToPool != null
-                  ? `${formatNumber(wd.contracts.allowanceToPool)} LP`
-                  : '—'}
-              </span>
-              {wd.contracts?.needsPoolApproval != null && (
-                <span className="cps-dot">
-                  {wd.contracts.needsPoolApproval ? '(needs approval)' : '(ok)'}
-                </span>
-              )}
+          {/* Right Column */}
+          <div className="pool-details-right">
+            <div className="details-grid">
+              <div className="details-col">
+                <p>Daily USD volume: <b>${formatNumber(pd.stats?.dailyUSDVolume, 0)}</b></p>
+                <p>Liquidity utilization: <b>{formatNumber(pd.stats?.liquidityUtilization, 1)}%</b></p>
+                <p>Total LP Tokens staked: <b>{formatNumber(pd.stats?.totalLPTokensStaked, 0)}</b></p>
+                <p>Staked percent: <b>{formatNumber(pd.stats?.stakedPercent, 1)}%</b></p>
+              </div>
+              <div className="details-col">
+                <p>Fee: <b>{formatNumber(pd.fees?.fee, 3)}%</b></p>
+                <p>DAO fee: <b>{formatNumber(pd.fees?.daoFee, 3)}%</b></p>
+                <p>Virtual price: <b>{formatNumber(pd.fees?.virtualPrice, 4)}</b></p>
+              </div>
             </div>
-          </div>
 
-          <div className="cps-row">
-            <div className="cps-row-left">Allowance → Gauge</div>
-            <div className="cps-row-right">
-              <span>
-                {wd.contracts?.allowanceToGauge != null
-                  ? `${formatNumber(wd.contracts.allowanceToGauge)} LP`
-                  : '—'}
-              </span>
-              {wd.contracts?.needsGaugeApproval != null && (
-                <span className="cps-dot">
-                  {wd.contracts.needsGaugeApproval ? '(needs approval)' : '(ok)'}
-                </span>
-              )}
+            <div className="contracts">
+              <h4>Contracts</h4>
+              <p>
+                Pool / Token:{' '}
+                <a 
+                  href={`https://etherscan.io/address/${pd.contracts?.poolAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="address"
+                >
+                  {truncateAddress(pd.contracts?.poolAddress)}
+                </a>
+              </p>
+              <p>
+                Gauge:{' '}
+                <a 
+                  href={`https://etherscan.io/address/${pd.contracts?.gaugeAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="address"
+                >
+                  {truncateAddress(pd.contracts?.gaugeAddress)}
+                </a>
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Contracts statici del pool */}
-      <div className="cps-card">
-        <div className="cps-subtitle">Contracts (Pool)</div>
-        <div className="cps-list">
-          <div className="cps-row">
-            <div className="cps-row-left">Pool</div>
-            <div className="cps-row-right mono">
-              {pd.contracts?.poolAddress || '—'}
+      {/* YOUR DETAILS TAB */}
+      {activeTab === 'your' && (
+        <div className="tab-content your-details-content">
+          {!walletData || !walletData.address ? (
+            <div style={{ textAlign: 'center', padding: '40px', opacity: 0.6 }}>
+              <div style={{ fontSize: '16px', marginBottom: '8px' }}>Connect wallet to view your details</div>
             </div>
-          </div>
-          <div className="cps-row">
-            <div className="cps-row-left">Gauge</div>
-            <div className="cps-row-right mono">
-              {pd.contracts?.gaugeAddress || '—'}
-            </div>
+          ) : (
+            <>
+              <div className="your-position-header">
+                <h3 className="section-title">Your position</h3>
+                <p className="staked-share">
+                  Deposit share: <strong>{formatNumber((wd.depositShare || 0) * 100, 4)}% of pool</strong>
+                </p>
+              </div>
+
+              <div className="details-split">
+                <div className="details-left">
+                  <p className="detail-label">LP Tokens</p>
+                  <div className="detail-item">
+                    <span>Staked:</span>
+                    <span>{formatNumber(wd.stakedAmount, 2)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span>Unstaked:</span>
+                    <span>{formatNumber(wd.unstakedAmount, 2)}</span>
+                  </div>
+                </div>
+                <div className="details-right">
+                  <p className="detail-label">Your CRV Rewards tAPR: -</p>
+                  <p className="detail-label">
+                    Current Boost: <strong>{currentBoost}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <h4 className="withdraw-title">Balanced withdraw amounts</h4>
+              <div className="withdraw-details">
+                {(wd.tokenBalances || []).map((tokenBalance, index) => (
+                  <div key={index} className="withdraw-line">
+                    <span>{tokenBalance.symbol}</span>
+                    <span>{formatNumber(tokenBalance.amount, 2)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="total-line usd-balance">
+                <span>USD balance</span>
+                <span>${formatNumber(wd.usdBalance, 2)}</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ADVANCED TAB */}
+      {activeTab === 'advanced' && (
+        <div className="tab-content">
+          <div style={{ textAlign: 'center', padding: '40px', opacity: 0.6 }}>
+            <p>Advanced configuration coming soon...</p>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-function formatNumber(v) {
-  if (v == null || Number.isNaN(Number(v))) return '—';
+function formatNumber(v, decimals = 2) {
+  if (v == null || v === undefined || Number.isNaN(Number(v))) return '—';
   try {
-    if (Math.abs(v) >= 1000) {
-      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(v);
+    const num = Number(v);
+    if (Math.abs(num) >= 1000) {
+      return new Intl.NumberFormat('en-US', { 
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals 
+      }).format(num);
     }
-    return `${Number(v).toFixed(2)}`;
+    return num.toFixed(decimals);
   } catch {
-    return String(v);
+    return '—';
   }
+}
+
+function truncateAddress(address) {
+  if (!address) return '—';
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }

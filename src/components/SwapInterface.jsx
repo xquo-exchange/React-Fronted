@@ -514,7 +514,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
   return (
     <div className="swap-interface-container">
-      <h1 className="swap-interface-title">Swap</h1>
+      <h1 className="swap-interface-title">Trade</h1>
 
       <div className="swap-token-box">
         <div className="swap-token-header">
@@ -703,7 +703,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         disabled={isSwapping || !hasCalculated || !account}
         className="swap-execute-button"
       >
-        {isSwapping ? "SWAPPING..." : "SWAP"}
+        {isSwapping ? "TRADING..." : "TRADE"}
       </button>
     </div>
   );

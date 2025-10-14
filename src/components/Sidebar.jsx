@@ -10,7 +10,7 @@ const Sidebar = ({ activePage, setActivePage }) => {
           className={`swap-button ${activePage === "swap" ? "active" : ""}`}
           onClick={() => setActivePage("swap")}
         >
-          <h1 className="s-text">Swap</h1>
+          <h1 className="s-text">Trade</h1>
         </button>
 
         <button

@@ -81,7 +81,7 @@ export async function getPoolDetails(pool) {
         price: prices[i] || 1,
         amount: balances[i] || (tvl ? tvl / pool.underlyingCoins.length : 0),
         percentage: totalValue > 0 
-          ? +((balances[i] || 0) * (prices[i] || 1) / totalValue * 100).toFixed(2)
+          ? +((balances[i] || 0) / totalValue * 100).toFixed(2)
           : +(100 / pool.underlyingCoins.length).toFixed(2)
       }));
     }

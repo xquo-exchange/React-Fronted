@@ -84,32 +84,29 @@ export async function getWalletDetails(pool, externalProvider) {
     const totalLpTokens = (unstakedAmount || 0) + (stakedAmount || 0);
 
     // Get pool data
-    let virtualPrice = 1.0;
-    let poolTVL = 0;
+    //let virtualPrice = 1.0;
+    //let poolTVL = 0;
     let totalLPSupply = 0;
 
     if (pool.stats && typeof pool.stats.parameters === 'function') {
       const params = await pool.stats.parameters();
-      virtualPrice = num(params.virtualPrice || params.virtual_price) || 1.0;
+      //virtualPrice = num(params.virtualPrice || params.virtual_price) || 1.0;
       totalLPSupply = num(params.lpTokenSupply) || 0;
     }
     
     if (pool.stats && typeof pool.stats.totalLiquidity === 'function') {
-      poolTVL = await pool.stats.totalLiquidity();
+      //poolTVL = await pool.stats.totalLiquidity();
     }
 
-    const usdBalance = totalLpTokens * virtualPrice;
+    let usdBalance = 0//totalLpTokens * virtualPrice;
     const depositShare = totalLPSupply > 0 ? totalLpTokens / totalLPSupply : 0;
 
     // Calculate token breakdown
     let tokenBalances = [];
     if (pool.underlyingCoins && Array.isArray(pool.underlyingCoins)) {
-      const userPoolShare = totalLpTokens / (totalLPSupply || 1);
-      
-      tokenBalances = pool.underlyingCoins.map((symbol) => {
-        const tokenAmountInPool = poolTVL / pool.underlyingCoins.length;
-        const userTokenAmount = tokenAmountInPool * userPoolShare;
-        return { symbol, amount: userTokenAmount };
+      Object.entries(await pool.wallet.wrappedCoinBalances()).forEach(([address, value], index) => {
+        usdBalance += num(value)
+        tokenBalances.push({ symbol: pool.underlyingCoins[index], amount: num(value) })
       });
     }
 

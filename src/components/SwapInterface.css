@@ -216,6 +216,33 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* Calculate Button (new) */
+.swap-calculate-button {
+  width: 100%;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  color: rgba(59, 130, 246, 0.95);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 16px 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 12px;
+}
+
+.swap-calculate-button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.swap-calculate-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Swap Button */
 .swap-execute-button {
   width: 100%;
   background: #ffffff;
@@ -239,10 +266,6 @@
   opacity: 0.3;
   cursor: not-allowed;
   transform: none;
-}
-
-.swap-step-indicator {
-  display: none;
 }
 
 .swap-status-message {

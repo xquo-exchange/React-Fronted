@@ -59,13 +59,9 @@ export async function getPoolDetails(pool) {
     if (pool.underlyingCoins && Array.isArray(pool.underlyingCoins)) {
       let balances = [];
       let prices = [];
-      
+
       try {
-        if (pool.underlyingCoinBalances && Array.isArray(pool.underlyingCoinBalances)) {
-          balances = pool.underlyingCoinBalances.map(b => num(b));
-        } else if (typeof pool.underlyingCoinBalances === 'function') {
-          balances = (await pool.underlyingCoinBalances()).map(b => num(b));
-        }
+        balances = (await pool.stats.underlyingBalances()).map(b => num(b));
       } catch {}
 
       try {

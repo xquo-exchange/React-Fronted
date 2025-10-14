@@ -25,36 +25,27 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const [mode, setMode] = useState("stake");
   const [strategy, setStrategy] = useState("enhanced");
   
-  const [usdcBalance, setUsdcBalance] = useState("0");
+  const [rusdyBalance, setRusdyBalance] = useState("0");
   const [lpTokenBalance, setLpTokenBalance] = useState("0");
   
   const BASE_APY = 4;
   const CONSERVATIVE_APY = 5;
   const EARLY_WITHDRAWAL_FEE = 0.5;
 
-  // ✅ Fixed Dynamic Enhanced APY calculation
   const getEnhancedAPY = () => {
-    // Get weekly vAPY from pool data
     const weeklyVapy = parseFloat(poolData?.vapy?.weekly || "0");
-    
-    // If no data, return base APY
     if (weeklyVapy <= 0) return BASE_APY;
-    
-    // Enhanced APY = Base APY + Weekly vAPY boost
-    // Weekly vAPY is already annualized percentage
     return BASE_APY + weeklyVapy;
   };
 
-  // Use pool data from context
   const poolStats = {
     totalLiquidity: poolData?.stats?.usdTotal || "0",
-    baseApy: BASE_APY, // ✅ Fixed: Use constant base APY
+    baseApy: BASE_APY,
     weeklyVapy: parseFloat(poolData?.vapy?.weekly || "0"),
     enhancedApy: getEnhancedAPY(),
     userPositionUSD: "0"
   };
 
-  // ✅ Debug log
   useEffect(() => {
     if (poolData?.vapy) {
       console.log("📊 APY Data:", {
@@ -65,13 +56,12 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     }
   }, [poolData]);
 
-  // Fetch balances ONCE per account change
   useEffect(() => {
     let mounted = true;
     
     const fetchBalances = async () => {
       if (!account || !rpcProvider || !curveReady) {
-        setUsdcBalance("0");
+        setRusdyBalance("0");
         setLpTokenBalance("0");
         return;
       }
@@ -79,20 +69,21 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       try {
         console.log("🔄 Fetching StakeBox balances...");
         
-        // ✅ Fetch USDC balance (NOT rUSDY)
-        const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-        const usdcContract = new ethers.Contract(
-          USDC_ADDRESS,
-          ["function balanceOf(address) view returns (uint256)"],
+        const rusdyContract = new ethers.Contract(
+          RUSDY_ADDRESS,
+          ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"],
           rpcProvider
         );
         
-        const usdcBal = await usdcContract.balanceOf(account);
+        const [rusdyBal, rusdyDecimals] = await Promise.all([
+          rusdyContract.balanceOf(account),
+          rusdyContract.decimals()
+        ]);
         
         if (!mounted) return;
-        setUsdcBalance(ethers.utils.formatUnits(usdcBal, 6)); // USDC has 6 decimals
+        const formattedRusdy = ethers.utils.formatUnits(rusdyBal, rusdyDecimals);
+        setRusdyBalance(formattedRusdy);
         
-        // Fetch LP balance
         const rusdyPool = pools.usdcRusdy;
         if (!rusdyPool) return;
 
@@ -111,11 +102,11 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         if (!mounted) return;
         setLpTokenBalance(ethers.utils.formatUnits(lpBal, lpDecimals));
         
-        console.log("✅ StakeBox balances loaded - USDC:", ethers.utils.formatUnits(usdcBal, 6));
+        console.log("✅ StakeBox balances - rUSDY:", formattedRusdy, "LP:", ethers.utils.formatUnits(lpBal, lpDecimals));
       } catch (error) {
         console.error("StakeBox balance fetch error:", error);
         if (!mounted) return;
-        setUsdcBalance("0");
+        setRusdyBalance("0");
         setLpTokenBalance("0");
       }
     };
@@ -176,17 +167,17 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   };
 
   const setMaxAmount = () => {
-    const bal = mode === "stake" ? usdcBalance : lpTokenBalance;
+    const bal = mode === "stake" ? rusdyBalance : lpTokenBalance;
     
     if (!bal || parseFloat(bal) <= 0) {
-      onShowToast?.("error", `No ${mode === "stake" ? "USDC" : "LP"} balance`);
+      onShowToast?.("error", `No ${mode === "stake" ? "rUSDY" : "LP"} balance`);
       return;
     }
     
     setAmount(bal);
   };
 
-  // Execute Deposit (rUSDY → LP tokens)
+  // Execute Deposit (rUSDY → LP tokens) - DIRECT CONTRACT CALL
   const executeDeposit = async () => {
     if (!account || !window.ethereum || !curveReady) {
       onShowToast?.("error", "System not ready");
@@ -208,66 +199,94 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
 
-      const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-      const usdcContract = new ethers.Contract(
-        USDC_ADDRESS,
+      // Get rUSDY contract
+      const rusdyContract = new ethers.Contract(
+        RUSDY_ADDRESS,
         [
           "function balanceOf(address) view returns (uint256)",
           "function allowance(address owner, address spender) view returns (uint256)",
-          "function approve(address spender, uint256 amount) returns (bool)"
+          "function approve(address spender, uint256 amount) returns (bool)",
+          "function decimals() view returns (uint8)"
         ],
         signer
       );
 
-      const balance = await usdcContract.balanceOf(account);
-      const requiredAmount = ethers.utils.parseUnits(amount, 6);
+      const decimals = await rusdyContract.decimals();
+      const balance = await rusdyContract.balanceOf(account);
+      const requiredAmount = ethers.utils.parseUnits(amount, decimals);
 
       if (balance.lt(requiredAmount)) {
-        onShowToast?.("error", `Need ${amount} USDC. Have: ${ethers.utils.formatUnits(balance, 6)}`);
+        const actualBalance = ethers.utils.formatUnits(balance, decimals);
+        onShowToast?.("error", `Need ${amount} rUSDY. You have: ${actualBalance} rUSDY. Swap USDC for rUSDY first!`);
         setIsLoading(false);
         return;
       }
 
       setStatus("Checking approval...");
       const poolAddress = rusdyPool.address;
-      const allowance = await usdcContract.allowance(account, poolAddress);
+      const allowance = await rusdyContract.allowance(account, poolAddress);
 
       if (allowance.lt(requiredAmount)) {
-        setStatus("Approve USDC...");
-        const approveTx = await usdcContract.approve(poolAddress, requiredAmount);
+        setStatus("Approving rUSDY...");
+        const approveTx = await rusdyContract.approve(poolAddress, ethers.constants.MaxUint256);
         await approveTx.wait();
       }
 
-      setStatus("Depositing...");
-      const txHash = await rusdyPool.deposit([amount, 0], 0);
+      setStatus("Depositing rUSDY...");
       
-      console.log("✅ Deposit tx:", txHash);
-      
-      const receipt = await provider.waitForTransaction(
-        typeof txHash === 'string' ? txHash : txHash.hash
+      // ✅ DIRECT CONTRACT INTERACTION - Bypass Curve.js validation
+      const poolContract = new ethers.Contract(
+        poolAddress,
+        [
+          "function add_liquidity(uint256[2] amounts, uint256 min_mint_amount) returns (uint256)"
+        ],
+        signer
       );
+
+      // Call add_liquidity directly with [0, rUSDY_amount]
+      const tx = await poolContract.add_liquidity(
+        [0, requiredAmount],  // [USDC amount, rUSDY amount] in wei
+        0,                    // min LP tokens (0 for simplicity, adjust for slippage)
+        { gasLimit: 500000 }
+      );
+      
+      console.log("✅ Deposit tx submitted:", tx.hash);
+      setStatus("Waiting for confirmation...");
+      
+      const receipt = await tx.wait();
       
       if (receipt.status !== 1) throw new Error("Transaction failed");
 
-      onShowToast?.("success", "Deposit successful!", typeof txHash === 'string' ? txHash : txHash.hash);
+      console.log("✅ Deposit confirmed!");
+      onShowToast?.("success", "Deposit successful!", tx.hash);
       setAmount("");
       
-      const newBal = await usdcContract.balanceOf(account);
-      setUsdcBalance(ethers.utils.formatUnits(newBal, 6));
+      // Refresh balances
+      const newBal = await rusdyContract.balanceOf(account);
+      setRusdyBalance(ethers.utils.formatUnits(newBal, decimals));
+      
+      const lpTokenAddress = rusdyPool.lpToken || rusdyPool.address;
+      const lpContract = new ethers.Contract(
+        lpTokenAddress,
+        ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"],
+        rpcProvider
+      );
+      const [lpBal, lpDecimals] = await Promise.all([
+        lpContract.balanceOf(account),
+        lpContract.decimals()
+      ]);
+      setLpTokenBalance(ethers.utils.formatUnits(lpBal, lpDecimals));
 
     } catch (error) {
       console.error("❌ Deposit error:", error);
       const msg = error.message || String(error);
       
-      // ✅ User-friendly error messages
       if (msg.includes("user rejected") || msg.includes("denied")) {
-        onShowToast?.("error", "You cancelled the transaction");
-      } else if (msg.includes("insufficient")) {
-        onShowToast?.("error", "Not enough USDC balance");
-      } else if (msg.includes("UNPREDICTABLE_GAS_LIMIT")) {
-        onShowToast?.("error", "Deposit would fail. Check USDC balance");
+        onShowToast?.("error", "Transaction cancelled");
+      } else if (msg.includes("insufficient funds")) {
+        onShowToast?.("error", "Insufficient ETH for gas");
       } else {
-        onShowToast?.("error", "Deposit failed. Check console for details");
+        onShowToast?.("error", `Deposit failed: ${msg.slice(0, 60)}...`);
       }
     } finally {
       setIsLoading(false);
@@ -275,7 +294,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     }
   };
 
-  // Execute Withdrawal (LP tokens → USDC)
+  // Execute Withdrawal (LP tokens → rUSDY)
   const executeWithdrawal = async () => {
     if (!account || !window.ethereum || !curveReady) {
       onShowToast?.("error", "System not ready");
@@ -294,13 +313,14 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       const rusdyPool = pools.usdcRusdy;
       if (!rusdyPool) throw new Error("Pool not loaded");
 
-      setStatus("Calculating withdrawal...");
-      
-      // ✅ Increase slippage for withdrawal (pool imbalance)
-      const withdrawalSlippage = 2.0; // 2% slippage for withdrawals
-      
       setStatus("Withdrawing...");
-      const txHash = await rusdyPool.withdraw(amount, 0, withdrawalSlippage);
+      
+      // Withdraw to rUSDY (index 1 in the pool)
+      const txHash = await rusdyPool.withdraw(
+        amount,  // LP token amount
+        1,       // coin index (1 = rUSDY)
+        2.0      // 2% slippage
+      );
       
       console.log("✅ Withdrawal tx:", txHash);
       
@@ -314,33 +334,45 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       onShowToast?.("success", "Withdrawal successful!", typeof txHash === 'string' ? txHash : txHash.hash);
       setAmount("");
       
-      // Refresh LP balance
-      const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-      const usdcContract = new ethers.Contract(
-        USDC_ADDRESS,
-        ["function balanceOf(address) view returns (uint256)"],
+      // Refresh rUSDY balance
+      const rusdyContract = new ethers.Contract(
+        RUSDY_ADDRESS,
+        ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"],
         rpcProvider
       );
-      const newBal = await usdcContract.balanceOf(account);
-      setUsdcBalance(ethers.utils.formatUnits(newBal, 6));
+      const [newBal, decimals] = await Promise.all([
+        rusdyContract.balanceOf(account),
+        rusdyContract.decimals()
+      ]);
+      setRusdyBalance(ethers.utils.formatUnits(newBal, decimals));
+      
+      // Refresh LP balance
+      const lpTokenAddress = rusdyPool.lpToken || rusdyPool.address;
+      const lpContract = new ethers.Contract(
+        lpTokenAddress,
+        ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"],
+        rpcProvider
+      );
+      const [lpBal, lpDecimals] = await Promise.all([
+        lpContract.balanceOf(account),
+        lpContract.decimals()
+      ]);
+      setLpTokenBalance(ethers.utils.formatUnits(lpBal, lpDecimals));
 
     } catch (error) {
       console.error("❌ Withdrawal error:", error);
       const msg = error.message || String(error);
       
-      // ✅ User-friendly error messages
       if (msg.includes("user rejected") || msg.includes("denied")) {
-        onShowToast?.("error", "You cancelled the transaction");
-      } else if (msg.includes("fewer coins than expected")) {
-        onShowToast?.("error", "Pool imbalanced. Try smaller amount or wait");
+        onShowToast?.("error", "Transaction cancelled");
+      } else if (msg.includes("fewer coins")) {
+        onShowToast?.("error", "Pool imbalanced. Try smaller amount");
       } else if (msg.includes("slippage")) {
-        onShowToast?.("error", "Price moved too much. Try again");
-      } else if (msg.includes("UNPREDICTABLE_GAS_LIMIT")) {
-        onShowToast?.("error", "Withdrawal would fail. Check LP balance");
+        onShowToast?.("error", "Price moved too much");
       } else if (msg.includes("insufficient")) {
-        onShowToast?.("error", "Not enough LP tokens");
+        onShowToast?.("error", "Insufficient LP tokens");
       } else {
-        onShowToast?.("error", "Withdrawal failed. Check console for details");
+        onShowToast?.("error", "Withdrawal failed. Check console");
       }
     } finally {
       setIsLoading(false);
@@ -373,7 +405,6 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   return (
     <>
       <div className="stake-container">
-        {/* Pool Detail Card */}
         <div className="pool-detail-card">
           <h3 className="pool-title">rUSDY/USDC Liquidity Pool</h3>
           
@@ -402,7 +433,6 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           )}
         </div>
 
-        {/* Mode Switch */}
         <div className="stake-mode-switch">
           <button
             className={`stake-mode-btn ${mode === "stake" ? "active" : ""}`}
@@ -418,7 +448,6 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           </button>
         </div>
 
-        {/* Strategy Selection */}
         {mode === "stake" && (
           <div className="strategy-selection">
             <h4 className="strategy-title">Select Strategy</h4>
@@ -449,14 +478,13 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           </div>
         )}
 
-        {/* Input Box */}
         <div className="stake-token-box">
           <div className="stake-token-header">
             <span className="stake-balance-label">
               Avail. {mode === "stake"
-                ? parseFloat(usdcBalance).toFixed(2)
+                ? parseFloat(rusdyBalance).toFixed(2)
                 : parseFloat(lpTokenBalance).toFixed(6)}{" "}
-              {mode === "stake" ? "USDC" : "LP"} {/* ✅ Changed from rUSDY */}
+              {mode === "stake" ? "rUSDY" : "LP"}
             </span>
             <button onClick={setMaxAmount} className="stake-max-button">
               MAX
@@ -486,7 +514,6 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           </div>
         </div>
 
-        {/* Yield Projection */}
         {mode === "stake" && amount && parseFloat(amount) > 0 && (
           <div className="yield-projection">
             <h4 className="yield-title">Projected Earnings</h4>
@@ -510,7 +537,6 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           </div>
         )}
 
-        {/* Unstake Summary */}
         {mode === "unstake" && amount && parseFloat(amount) > 0 && (
           <div className="unstake-summary">
             <h4 className="unstake-title">Withdrawal Summary</h4>
@@ -520,7 +546,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
                 <span className="unstake-value">{amount}</span>
               </div>
               <div className="unstake-row">
-                <span className="unstake-label">USDC (est.)</span>
+                <span className="unstake-label">rUSDY (est.)</span>
                 <span className="unstake-value">${unstakeSummary.usdc}</span>
               </div>
               <div className="unstake-row warning">
@@ -535,7 +561,6 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
           </div>
         )}
 
-        {/* Action Button */}
         <button
           className="stake-action-button"
           onClick={handleActionClick}
@@ -551,7 +576,6 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         </button>
       </div>
 
-      {/* Modals */}
       {showWarning &&
         ReactDOM.createPortal(
           <div className="swap-warning" onClick={closeWarning}>

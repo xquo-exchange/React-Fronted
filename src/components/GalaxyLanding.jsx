@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './GalaxyLanding.css';
+import xquoLogo from '../assets/X-QUO white.svg';
 
 const GalaxyLanding = ({ onConnect }) => {
   const canvasRef = useRef(null);
@@ -7,8 +8,19 @@ const GalaxyLanding = ({ onConnect }) => {
   const stars = useRef([]);
   const trail = useRef([]);
   const animationFrameId = useRef(null);
+  const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Check if mobile
+    const checkMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobile(checkMobile);
+
+    // Check if MetaMask is installed (only if not mobile)
+    if (!checkMobile && typeof window.ethereum === 'undefined') {
+      setError('METAMASK_NOT_INSTALLED');
+    }
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
@@ -22,7 +34,7 @@ const GalaxyLanding = ({ onConnect }) => {
     // Initialize stars (fewer, white only)
     const initStars = () => {
       stars.current = [];
-      const starCount = 1000; // Reduced from 200
+      const starCount = 1000;
       
       for (let i = 0; i < starCount; i++) {
         stars.current.push({
@@ -65,8 +77,8 @@ const GalaxyLanding = ({ onConnect }) => {
       
       // Draw and update trail
       trail.current.forEach((point, index) => {
-        point.opacity *= 0.92; // Fade out
-        point.radius *= 0.95; // Shrink
+        point.opacity *= 0.92;
+        point.radius *= 0.95;
         
         ctx.beginPath();
         ctx.arc(point.x, point.y, point.radius, 0, Math.PI * 2);
@@ -79,31 +91,28 @@ const GalaxyLanding = ({ onConnect }) => {
       
       // Draw and update stars
       stars.current.forEach((star) => {
-        // Calculate distance from mouse (reduced effect)
+        // Calculate distance from mouse
         const dx = mousePos.current.x - star.x;
         const dy = mousePos.current.y - star.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 100; // Reduced from 150
+        const maxDistance = 100;
         
         if (distance < maxDistance) {
-          // Subtle push away from mouse
           const force = (maxDistance - distance) / maxDistance;
           const angle = Math.atan2(dy, dx);
-          star.vx = -Math.cos(angle) * force * 3; // Reduced from 15
+          star.vx = -Math.cos(angle) * force * 3;
           star.vy = -Math.sin(angle) * force * 3;
         } else {
-          // Return to original position (slower)
-          star.vx += (star.originalX - star.x) * 0.02; // Reduced from 0.05
+          star.vx += (star.originalX - star.x) * 0.02;
           star.vy += (star.originalY - star.y) * 0.02;
         }
         
-        // Apply velocity with more damping
-        star.vx *= 0.85; // Increased damping from 0.9
+        star.vx *= 0.85;
         star.vy *= 0.85;
         star.x += star.vx;
         star.y += star.vy;
         
-        // Draw star (simple white dot)
+        // Draw star
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
@@ -127,17 +136,50 @@ const GalaxyLanding = ({ onConnect }) => {
     };
   }, []);
 
+  const handleConnectClick = () => {
+    if (isMobile) {
+      return; // Do nothing on mobile
+    }
+    if (error === 'METAMASK_NOT_INSTALLED') {
+      window.open('https://metamask.io/download/', '_blank');
+      return;
+    }
+    onConnect();
+  };
+
+  const getButtonText = () => {
+    if (isMobile) return 'Mobile Not Supported';
+    if (error === 'METAMASK_NOT_INSTALLED') return 'Install MetaMask';
+    return 'Connect Wallet';
+  };
+
+  const getSubtitleText = () => {
+    if (error === 'METAMASK_NOT_INSTALLED') {
+      return 'Please install MetaMask browser extension to continue';
+    }
+    return 'Connect wallet to continue';
+  };
+
   return (
     <div className="galaxy-landing">
       <canvas ref={canvasRef} className="galaxy-canvas" />
       
       <div className="galaxy-content">
         <div className="galaxy-hero">
-          <h1 className="galaxy-title">X-QUO</h1>
-          <p className="galaxy-subtitle">Connect wallet to continue</p>
+          <img src={xquoLogo} alt="X-QUO" className="galaxy-logo" />
+          <p className={`galaxy-subtitle ${(error || isMobile) ? 'galaxy-subtitle-error' : ''}`}>
+            {getSubtitleText()}
+          </p>
+          <p className="galaxy-mobile-warning">
+            Not available on mobile
+          </p>
           
-          <button onClick={onConnect} className="galaxy-connect-btn">
-            Connect Wallet
+          <button 
+            onClick={handleConnectClick} 
+            className={`galaxy-connect-btn ${(isMobile) ? 'galaxy-connect-btn-disabled' : ''}`}
+            disabled={isMobile}
+          >
+            {getButtonText()}
           </button>
         </div>
       </div>

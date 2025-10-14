@@ -72,6 +72,11 @@
   margin: 0;
 }
 
+.navbar-logo-image {
+  height: 32px;
+  width: auto;
+}
+
 .navbar-right {
   display: flex;
   align-items: center;
@@ -234,7 +239,7 @@
     padding: 16px 24px;
   }
   
-  .navbar-logo {
-    font-size: 16px;
+  .navbar-logo-image {
+    height: 28px;
   }
 }

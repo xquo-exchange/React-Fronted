@@ -155,7 +155,7 @@ const GalaxyLanding = ({ onConnect }) => {
 
   const getSubtitleText = () => {
     if (error === 'METAMASK_NOT_INSTALLED') {
-      return 'Please install MetaMask browser extension to continue';
+      return 'Please install a crypto wallet browser extension to continue';
     }
     return 'Connect wallet to continue';
   };

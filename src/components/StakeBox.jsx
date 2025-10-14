@@ -177,7 +177,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     setAmount(bal);
   };
 
-  // Execute Deposit (rUSDY → LP tokens) - DIRECT CONTRACT CALL
+  // Execute Deposit (rUSDY → LP tokens) - USING CURVE.JS
   const executeDeposit = async () => {
     if (!account || !window.ethereum || !curveReady) {
       onShowToast?.("error", "System not ready");
@@ -199,13 +199,11 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
 
-      // Get rUSDY contract
+      // Get rUSDY contract to check balance
       const rusdyContract = new ethers.Contract(
         RUSDY_ADDRESS,
         [
           "function balanceOf(address) view returns (uint256)",
-          "function allowance(address owner, address spender) view returns (uint256)",
-          "function approve(address spender, uint256 amount) returns (bool)",
           "function decimals() view returns (uint8)"
         ],
         signer
@@ -222,43 +220,23 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         return;
       }
 
-      setStatus("Checking approval...");
-      const poolAddress = rusdyPool.address;
-      const allowance = await rusdyContract.allowance(account, poolAddress);
-
-      if (allowance.lt(requiredAmount)) {
-        setStatus("Approving rUSDY...");
-        const approveTx = await rusdyContract.approve(poolAddress, ethers.constants.MaxUint256);
-        await approveTx.wait();
-      }
-
       setStatus("Depositing rUSDY...");
       
-      // ✅ DIRECT CONTRACT INTERACTION - Bypass Curve.js validation
-      const poolContract = new ethers.Contract(
-        poolAddress,
-        [
-          "function add_liquidity(uint256[2] amounts, uint256 min_mint_amount) returns (uint256)"
-        ],
-        signer
-      );
-
-      // Call add_liquidity directly with [0, rUSDY_amount]
-      const tx = await poolContract.add_liquidity(
-        [0, requiredAmount],  // [USDC amount, rUSDY amount] in wei
-        0,                    // min LP tokens (0 for simplicity, adjust for slippage)
-        { gasLimit: 500000 }
-      );
+      // ✅ USE CURVE.JS deposit() METHOD - Pass string "0" for USDC, amount string for rUSDY
+      // deposit([usdc_amount, rusdy_amount], slippage)
+      const depositTx = await rusdyPool.deposit([amount, 0], 0.1); // "0" rUSDY, USDC amount as string
       
-      console.log("✅ Deposit tx submitted:", tx.hash);
+      console.log("✅ Deposit tx submitted:", depositTx);
       setStatus("Waiting for confirmation...");
       
-      const receipt = await tx.wait();
+      const receipt = await provider.waitForTransaction(
+        typeof depositTx === 'string' ? depositTx : depositTx.hash
+      );
       
-      if (receipt.status !== 1) throw new Error("Transaction failed");
+      if (!receipt || receipt.status !== 1) throw new Error("Transaction failed");
 
       console.log("✅ Deposit confirmed!");
-      onShowToast?.("success", "Deposit successful!", tx.hash);
+      onShowToast?.("success", "Deposit successful!", typeof depositTx === 'string' ? depositTx : depositTx.hash);
       setAmount("");
       
       // Refresh balances
@@ -294,7 +272,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     }
   };
 
-  // Execute Withdrawal (LP tokens → rUSDY)
+  // Execute Withdrawal (LP tokens → rUSDY) - USING CURVE.JS
   const executeWithdrawal = async () => {
     if (!account || !window.ethereum || !curveReady) {
       onShowToast?.("error", "System not ready");
@@ -315,23 +293,23 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       setStatus("Withdrawing...");
       
-      // Withdraw to rUSDY (index 1 in the pool)
-      const txHash = await rusdyPool.withdraw(
-        amount,  // LP token amount
-        1,       // coin index (1 = rUSDY)
-        2.0      // 2% slippage
-      );
-      
-      console.log("✅ Withdrawal tx:", txHash);
+      // ✅ USE CURVE.JS withdraw() METHOD
+      // withdraw(lpTokenAmount, slippage) - automatically withdraws to all coins proportionally
+      const RUSDY_INDEX = 0; // usually 0 = rUSDY, 1 = USDC — confirm via pool.coins
+      const withdrawTx = await rusdyPool.withdrawOneCoin(amount, RUSDY_INDEX, 0.1);
+
+            
+      console.log("✅ Withdrawal tx:", withdrawTx);
+      setStatus("Waiting for confirmation...");
       
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const receipt = await provider.waitForTransaction(
-        typeof txHash === 'string' ? txHash : txHash.hash
+        typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash
       );
       
-      if (receipt.status !== 1) throw new Error("Transaction failed");
+      if (!receipt || receipt.status !== 1) throw new Error("Transaction failed");
 
-      onShowToast?.("success", "Withdrawal successful!", typeof txHash === 'string' ? txHash : txHash.hash);
+      onShowToast?.("success", "Withdrawal successful!", typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash);
       setAmount("");
       
       // Refresh rUSDY balance
@@ -595,21 +573,21 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       {showStatus &&
         ReactDOM.createPortal(
-          <div className="swap-warning">
-            <div className="swap-warning__content status-modal">
-              <h3 className="swap-warning__title">Operation Status</h3>
+          <div className="status-overlay">
+            <div className="status-modal-positioned">
+              <h3 className="status-modal-title">Operation Status</h3>
               {isLoading && (
                 <div className="status-spinner">
                   <div className="spinner"></div>
                 </div>
               )}
-              <p className="swap-warning__text status-text">
+              <p className="status-modal-text">
                 {status || "Waiting..."}
               </p>
               {!isLoading && (
-                <div className="swap-warning__actions">
-                  <button className="btn-primary" onClick={() => setShowStatus(false)}>Close</button>
-                </div>
+                <button className="status-close-btn" onClick={() => setShowStatus(false)}>
+                  Close
+                </button>
               )}
             </div>
           </div>,

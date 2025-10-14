@@ -111,7 +111,7 @@ export default function CurvePoolStatistics() {
             <div className="vapy-box">
               <div className="vapy-header">
                 <span>Base vAPY</span>
-                <a href="https://resources.curve.fi/reward-gauges/understanding-gauges" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.curve.finance/dex/ethereum/legal?tab=disclaimers" target="_blank" rel="noopener noreferrer">
                   Learn more
                 </a>
               </div>

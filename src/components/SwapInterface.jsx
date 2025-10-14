@@ -242,7 +242,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
             await resetTx.wait();
           }
           
-          setStatus("📝 Approve in MetaMask...");
+          setStatus("📝 Approve in Wallet...");
           const approveTx = await tokenContract.approve(spender, required);
           
           setStatus("⏳ Waiting for approval confirmation...");
@@ -301,7 +301,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         if (fromToken === "ETH") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: ETH → USDC swap...`);
-          setStatus("📝 Confirm swap in MetaMask...");
+          setStatus("📝 Confirm swap in Wallet...");
           
           // ✅ FIXED: Pass slippage as percentage (1.0 = 1%)
           const tx1Hash = await usdcPool.swap("ETH", "USDC", fromAmount, slippage);
@@ -324,7 +324,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
           setCurrentStep(3);
           setStatus(`💱 Step 3/${steps}: USDC → rUSDY swap...`);
-          setStatus("📝 Confirm second swap in MetaMask...");
+          setStatus("📝 Confirm second swap in Wallet...");
           
           // ✅ FIXED: Pass slippage as percentage
           txHash = await rusdyPool.swap("USDC", TOKEN_REGISTRY.rUSDY.address, usdcAmount, slippage);
@@ -337,7 +337,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         } else if (fromToken === "USDC") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: USDC → rUSDY swap...`);
-          setStatus("📝 Confirm swap in MetaMask...");
+          setStatus("📝 Confirm swap in Wallet...");
           
           // ✅ FIXED: Pass slippage as percentage
           txHash = await rusdyPool.swap("USDC", TOKEN_REGISTRY.rUSDY.address, fromAmount, slippage);
@@ -353,7 +353,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         if (toToken === "USDC") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: rUSDY → USDC swap...`);
-          setStatus("📝 Confirm swap in MetaMask...");
+          setStatus("📝 Confirm swap in Wallet...");
           
           // ✅ FIXED: Pass slippage as percentage
           txHash = await rusdyPool.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage);
@@ -366,7 +366,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         } else if (toToken === "ETH") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: rUSDY → USDC swap...`);
-          setStatus("📝 Confirm first swap in MetaMask...");
+          setStatus("📝 Confirm first swap in Wallet...");
           
           // ✅ FIXED: Pass slippage as percentage
           const tx1Hash = await rusdyPool.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage);
@@ -389,7 +389,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
           setCurrentStep(3);
           setStatus(`💱 Step 3/${steps}: USDC → ETH swap...`);
-          setStatus("📝 Confirm second swap in MetaMask...");
+          setStatus("📝 Confirm second swap in Wallet...");
           
           // ✅ FIXED: Pass slippage as percentage
           txHash = await pools.ethUsdc.swap("USDC", "ETH", usdcAmount, slippage);
@@ -402,7 +402,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       } else {
         setCurrentStep(fromToken === "ETH" ? 1 : 2);
         setStatus(`💱 Step ${currentStep}/${steps}: ${fromToken} → ${toToken} swap...`);
-        setStatus("📝 Confirm swap in MetaMask...");
+        setStatus("📝 Confirm swap in Wallet...");
         
         // ✅ FIXED: Pass slippage as percentage (not divided by 100)
         txHash = await curve.router.swap(

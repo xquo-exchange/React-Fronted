@@ -394,6 +394,18 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   };
 
   const handleActionClick = () => {
+    // ✅ PUSH TO DATALAYER ON CLICK (before any validation)
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: mode === "stake" ? "stake_deposit_click" : "stake_withdraw_click",
+      amount_usd: parseFloat(amount) || 0,
+      strategy: mode === "stake" ? strategy : "n/a",
+      mode,
+      apy_percent: mode === "stake" 
+        ? (strategy === "conservative" ? CONSERVATIVE_APY : Number(poolStats.enhancedApy).toFixed(2))
+        : "n/a"
+    });
+
     if (!isConnected) {
       setShowWarning(true);
       return;

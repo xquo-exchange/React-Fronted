@@ -4,6 +4,7 @@ import { useWallet } from "../hooks/useWallet";
 import { useCurve } from "../contexts/CurveContext";
 import { useRpcProvider } from "../contexts/RpcContext";
 import "./SwapInterface.css";
+import "../curve/utility/gtm.js"; // Ensure GTM utility is loaded
 
 const TOKEN_REGISTRY = {
   ETH: { address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", decimals: 18, symbol: "ETH" },
@@ -20,7 +21,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
   const { walletAddress: account } = useWallet();
   const { curve, curveReady, pools } = useCurve();
   const provider = useRpcProvider();
-  
+
   const [fromToken, setFromToken] = useState("ETH");
   const [toToken, setToToken] = useState("USDC");
   const [fromAmount, setFromAmount] = useState("");
@@ -33,13 +34,13 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
   const [customSlippage, setCustomSlippage] = useState("");
   const [ethPrice, setEthPrice] = useState(4136);
   const [hasCalculated, setHasCalculated] = useState(false);
-  
+
   // ✅ NEW: Status tracking
   const [status, setStatus] = useState("");
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [txHash, setTxHash] = useState("");
-  
+
   const balanceFetchRef = useRef(false);
 
   const calculateUsdValue = (amount, token) => {
@@ -55,16 +56,16 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
   useEffect(() => {
     if (balanceFetchRef.current || !account || !provider) return;
     balanceFetchRef.current = true;
-    
+
     const fetchBalances = async () => {
       try {
         console.log("🔄 Fetching balances for", account.slice(0, 6));
         const bals = {};
-        
+
         // Fetch ETH balance
         const ethBal = await provider.getBalance(account);
         bals.ETH = ethers.utils.formatEther(ethBal);
-        
+
         // Fetch token balances in parallel
         const tokenPromises = Object.entries(TOKEN_REGISTRY)
           .filter(([key]) => key !== "ETH")
@@ -118,7 +119,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         if (fromToken === "ETH") {
           setStatus("📊 Calculating ETH → USDC...");
           const usdcOut = await usdcPool.swapExpected("ETH", "USDC", fromAmount);
-          
+
           setStatus("📊 Calculating USDC → rUSDY...");
           const rusdyOut = await rusdyPool.swapExpected("USDC", TOKEN_REGISTRY.rUSDY.address, usdcOut);
           output = rusdyOut;
@@ -137,7 +138,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         } else if (toToken === "ETH") {
           setStatus("📊 Calculating rUSDY → USDC...");
           const usdcOut = await rusdyPool.swapExpected(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount);
-          
+
           setStatus("📊 Calculating USDC → ETH...");
           const ethOut = await pools.ethUsdc.swapExpected("USDC", "ETH", usdcOut);
           output = ethOut;
@@ -155,10 +156,10 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       }
 
       setToAmount(parseFloat(output).toFixed(6));
-      
+
       const rate = parseFloat(output) / parseFloat(fromAmount);
-      setSwapRoute({ 
-        route, 
+      setSwapRoute({
+        route,
         exchangeRate: rate.toFixed(6),
         priceImpact: "< 0.01%",
         estimatedGas: "~0.002 ETH"
@@ -171,7 +172,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       setHasCalculated(true);
       setStatus("✅ Route calculated!");
       onShowToast?.("success", "Route calculated!");
-      
+
       setTimeout(() => setStatus(""), 2000);
     } catch (error) {
       console.error("❌ Calculation error:", error);
@@ -192,6 +193,20 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
     setIsSwapping(true);
     setTxHash("");
 
+    // 🔹 Fire GTM swap_initiated event
+
+    safePushToDataLayer({
+      event: "swap_initiated",
+      from_token: fromToken,
+      to_token: toToken,
+      from_amount: Number(fromAmount),
+      to_amount: Number(toAmount || 0),
+      amount_usd: Number(calculateUsdValue(fromAmount, fromToken)),
+      route: swapRoute?.route || `${fromToken}→${toToken}`,
+      slippage_percent: slippage,
+    });
+
+
     try {
       const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = web3Provider.getSigner();
@@ -209,7 +224,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       if (fromToken !== "ETH") {
         setCurrentStep(1);
         setStatus(`🔐 Step 1/${steps}: Checking ${fromToken} approval...`);
-        
+
         const tokenContract = new ethers.Contract(
           TOKEN_REGISTRY[fromToken].address,
           [
@@ -234,20 +249,20 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         if (allowance.lt(required)) {
           setStatus(`📝 Requesting approval for ${fromAmount} ${fromToken}...`);
           console.log(`📝 Approving ${fromAmount} ${fromToken}...`);
-          
+
           if (fromToken === "USDT" && allowance.gt(0)) {
             setStatus("🔄 Resetting USDT allowance...");
             const resetTx = await tokenContract.approve(spender, 0);
             setStatus("⏳ Waiting for reset confirmation...");
             await resetTx.wait();
           }
-          
+
           setStatus("📝 Approve in Wallet...");
           const approveTx = await tokenContract.approve(spender, required);
-          
+
           setStatus("⏳ Waiting for approval confirmation...");
           const approvalReceipt = await approveTx.wait();
-          
+
           setStatus(`✅ ${fromToken} approved! (Tx: ${approvalReceipt.transactionHash.slice(0, 10)}...)`);
           console.log("✅ Approval confirmed:", approvalReceipt.transactionHash);
         } else {
@@ -262,7 +277,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       // ✅ FIXED: Get fresh quote right before swap
       setStatus("🔄 Getting fresh price quote...");
       let freshOutput = "0";
-      
+
       if (toToken === "rUSDY") {
         const usdcPool = pools.ethUsdc;
         const rusdyPool = pools.usdcRusdy;
@@ -302,12 +317,12 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: ETH → USDC swap...`);
           setStatus("📝 Confirm swap in Wallet...");
-          
+
           // ✅ FIXED: Pass slippage as percentage (1.0 = 1%)
           const tx1Hash = await usdcPool.swap("ETH", "USDC", fromAmount, slippage);
           const hash1 = typeof tx1Hash === 'string' ? tx1Hash : tx1Hash.hash;
           setTxHash(hash1);
-          
+
           setStatus(`⏳ Waiting for ETH → USDC tx... (${hash1.slice(0, 10)}...)`);
           const receipt1 = await web3Provider.waitForTransaction(hash1);
 
@@ -325,54 +340,54 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setCurrentStep(3);
           setStatus(`💱 Step 3/${steps}: USDC → rUSDY swap...`);
           setStatus("📝 Confirm second swap in Wallet...");
-          
+
           // ✅ FIXED: Pass slippage as percentage
           txHash = await rusdyPool.swap("USDC", TOKEN_REGISTRY.rUSDY.address, usdcAmount, slippage);
           const hash2 = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash2);
-          
+
           setStatus(`⏳ Waiting for USDC → rUSDY tx... (${hash2.slice(0, 10)}...)`);
           receipt = await web3Provider.waitForTransaction(hash2);
-          
+
         } else if (fromToken === "USDC") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: USDC → rUSDY swap...`);
           setStatus("📝 Confirm swap in Wallet...");
-          
+
           // ✅ FIXED: Pass slippage as percentage
           txHash = await rusdyPool.swap("USDC", TOKEN_REGISTRY.rUSDY.address, fromAmount, slippage);
           const hash = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash);
-          
+
           setStatus(`⏳ Waiting for confirmation... (${hash.slice(0, 10)}...)`);
           receipt = await web3Provider.waitForTransaction(hash);
         }
       } else if (fromToken === "rUSDY") {
         const rusdyPool = pools.usdcRusdy;
-        
+
         if (toToken === "USDC") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: rUSDY → USDC swap...`);
           setStatus("📝 Confirm swap in Wallet...");
-          
+
           // ✅ FIXED: Pass slippage as percentage
           txHash = await rusdyPool.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage);
           const hash = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash);
-          
+
           setStatus(`⏳ Waiting for confirmation... (${hash.slice(0, 10)}...)`);
           receipt = await web3Provider.waitForTransaction(hash);
-          
+
         } else if (toToken === "ETH") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: rUSDY → USDC swap...`);
           setStatus("📝 Confirm first swap in Wallet...");
-          
+
           // ✅ FIXED: Pass slippage as percentage
           const tx1Hash = await rusdyPool.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage);
           const hash1 = typeof tx1Hash === 'string' ? tx1Hash : tx1Hash.hash;
           setTxHash(hash1);
-          
+
           setStatus(`⏳ Waiting for rUSDY → USDC tx... (${hash1.slice(0, 10)}...)`);
           const receipt1 = await web3Provider.waitForTransaction(hash1);
 
@@ -390,12 +405,12 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setCurrentStep(3);
           setStatus(`💱 Step 3/${steps}: USDC → ETH swap...`);
           setStatus("📝 Confirm second swap in Wallet...");
-          
+
           // ✅ FIXED: Pass slippage as percentage
           txHash = await pools.ethUsdc.swap("USDC", "ETH", usdcAmount, slippage);
           const hash2 = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash2);
-          
+
           setStatus(`⏳ Waiting for USDC → ETH tx... (${hash2.slice(0, 10)}...)`);
           receipt = await web3Provider.waitForTransaction(hash2);
         }
@@ -403,7 +418,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         setCurrentStep(fromToken === "ETH" ? 1 : 2);
         setStatus(`💱 Step ${currentStep}/${steps}: ${fromToken} → ${toToken} swap...`);
         setStatus("📝 Confirm swap in Wallet...");
-        
+
         // ✅ FIXED: Pass slippage as percentage (not divided by 100)
         txHash = await curve.router.swap(
           TOKEN_REGISTRY[fromToken].address,
@@ -413,17 +428,32 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         );
         const hash = typeof txHash === 'string' ? txHash : txHash.hash;
         setTxHash(hash);
-        
+
         setStatus(`⏳ Waiting for confirmation... (${hash.slice(0, 10)}...)`);
         receipt = await web3Provider.waitForTransaction(hash);
       }
 
       if (receipt && receipt.status === 1) {
         const cleanHash = typeof txHash === 'string' ? txHash : txHash.hash || txHash;
-        
+
         setStatus("🎉 Swap successful!");
         console.log("✅ Swap successful:", cleanHash);
         onShowToast?.("success", "Swap successful!", cleanHash);
+
+        // 🔹 Fire GTM swap_completed event
+        safePushToDataLayer({
+          event: "swap_completed",
+          from_token: fromToken,
+          to_token: toToken,
+          from_amount: Number(fromAmount),
+          to_amount: Number(toAmount || 0),
+          amount_usd: Number(calculateUsdValue(fromAmount, fromToken)),
+          tx_hash: cleanHash,
+          route: swapRoute?.route || `${fromToken}→${toToken}`,
+          price_impact: swapRoute?.priceImpact || null,
+          slippage_percent: slippage,
+        });
+
 
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
@@ -447,17 +477,17 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         });
 
 
-        
+
         if (toToken === "rUSDY" && onSwapSuccess) onSwapSuccess(toAmount);
-        
+
         setStatus("🔄 Refreshing balances...");
         balanceFetchRef.current = false;
         const ethBal = await web3Provider.getBalance(account);
         const newBalances = { ...balances, ETH: ethers.utils.formatEther(ethBal) };
-        
+
         for (const [key, token] of Object.entries(TOKEN_REGISTRY)) {
           if (key === "ETH" || (key !== fromToken && key !== toToken)) continue;
-          
+
           const contract = new ethers.Contract(
             token.address,
             ["function balanceOf(address) view returns (uint256)"],
@@ -466,10 +496,10 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           const bal = await contract.balanceOf(account);
           newBalances[key] = ethers.utils.formatUnits(bal, token.decimals);
         }
-        
+
         setBalances(newBalances);
         setStatus("✅ Balances updated!");
-        
+
         setTimeout(() => {
           setStatus("");
           setTxHash("");
@@ -505,7 +535,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         setStatus("❌ Swap failed");
         onShowToast?.("error", "Swap failed. Check console");
       }
-      
+
       setTimeout(() => setStatus(""), 5000);
     } finally {
       setIsSwapping(false);
@@ -514,12 +544,12 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
   const setMax = () => {
     const bal = balances[fromToken];
-    
+
     if (!bal || parseFloat(bal) <= 0) {
       onShowToast?.("error", `No ${fromToken} balance`);
       return;
     }
-    
+
     setFromAmount((parseFloat(bal) * 0.99).toFixed(6));
     setHasCalculated(false);
     setToAmount("");
@@ -650,7 +680,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
             <div className="slippage-controls">
               <div className="slippage-preset-buttons">
                 {[0.5, 1.0, 2.0].map(s => (
-                  <button 
+                  <button
                     key={s}
                     className={`slippage-preset-btn ${slippage === s ? 'active' : ''}`}
                     onClick={() => { setSlippage(s); setCustomSlippage(""); }}
@@ -688,8 +718,8 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
             {isSwapping && totalSteps > 0 && (
               <div className="swap-progress">
                 <div className="swap-progress-bar">
-                  <div 
-                    className="swap-progress-fill" 
+                  <div
+                    className="swap-progress-fill"
                     style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                   />
                 </div>
@@ -700,7 +730,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
             )}
             <p className="swap-status-message">{status}</p>
             {txHash && (
-              <a 
+              <a
                 href={`https://etherscan.io/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"

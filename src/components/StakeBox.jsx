@@ -399,11 +399,20 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     window.dataLayer.push({
       event: mode === "stake" ? "stake_deposit_click" : "stake_withdraw_click",
       amount_usd: parseFloat(amount) || 0,
+      amount_token: parseFloat(amount) || 0,
+      from_token: mode === "stake" ? "rUSDY" : "LP",
+      to_token: mode === "stake" ? "LP" : "rUSDY",
       strategy: mode === "stake" ? strategy : "n/a",
       mode,
       apy_percent: mode === "stake" 
         ? (strategy === "conservative" ? CONSERVATIVE_APY : Number(poolStats.enhancedApy).toFixed(2))
-        : "n/a"
+        : "n/a",
+      user_balance: mode === "stake" ? parseFloat(rusdyBalance).toFixed(6) : parseFloat(lpTokenBalance).toFixed(6),
+      pool_liquidity: parseFloat(poolStats.totalLiquidity).toFixed(2),
+      base_apy: BASE_APY,
+      enhanced_apy: poolStats.enhancedApy.toFixed(2),
+      wallet_connected: isConnected,
+      curve_ready: curveReady
     });
 
     if (!isConnected) {

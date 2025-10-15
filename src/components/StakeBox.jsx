@@ -6,7 +6,7 @@ import { useCurve } from "../contexts/CurveContext";
 import { usePool } from "../contexts/PoolContext";
 import { useRpcProvider } from "../contexts/RpcContext";
 import "./StakeBox.css";
-import { safePushToDataLayer } from "..curve/utility/gtm";
+import { safePushToDataLayer } from "../curve/utility/gtm";
 
 const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 

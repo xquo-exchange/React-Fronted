@@ -4,7 +4,7 @@ import { useWallet } from "../hooks/useWallet";
 import { useCurve } from "../contexts/CurveContext";
 import { useRpcProvider } from "../contexts/RpcContext";
 import "./SwapInterface.css";
-import { safePushToDataLayer } from "..curve/utility/gtm";
+import { safePushToDataLayer } from "../curve/utility/gtm";
 
 const TOKEN_REGISTRY = {
   ETH: { address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", decimals: 18, symbol: "ETH" },

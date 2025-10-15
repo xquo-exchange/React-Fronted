@@ -439,6 +439,20 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           slippage_percent: slippage
         });
 
+        window.dataLayer.push({
+          event: 'swap_completed',
+          from_token: fromToken,
+          to_token: toToken,
+          from_amount: Number.parseFloat(fromAmount),
+          to_amount: Number.parseFloat(toAmount),
+          amount_usd: Number.parseFloat(calculateUsdValue(fromAmount, fromToken)),
+          tx_hash: cleanHash,
+          route: swapRoute?.route || `${fromToken}→${toToken}`,
+          price_impact: swapRoute?.priceImpact || null,
+          slippage_percent: slippage
+        });
+
+
         
         if (toToken === "rUSDY" && onSwapSuccess) onSwapSuccess(toAmount);
         

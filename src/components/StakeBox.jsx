@@ -238,7 +238,16 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       console.log("✅ Deposit confirmed!");
       onShowToast?.("success", "Deposit successful!", typeof depositTx === 'string' ? depositTx : depositTx.hash);
       setAmount("");
-      
+
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'stake_deposit',
+        amount_usd: Number.parseFloat(amount), // your UI treats amount as USD-ish here
+        apy_percent: strategy === 'conservative' ? CONSERVATIVE_APY : Number(poolStats.enhancedApy).toFixed(2),
+        strategy,
+        tx_hash: typeof depositTx === 'string' ? depositTx : depositTx.hash
+      });
+
       // Refresh balances
       const newBal = await rusdyContract.balanceOf(account);
       setRusdyBalance(ethers.utils.formatUnits(newBal, decimals));
@@ -311,6 +320,14 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       onShowToast?.("success", "Withdrawal successful!", typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash);
       setAmount("");
+
+      window.dataLayer.push({
+        event: 'stake_withdraw',
+        amount_usd: Number.parseFloat(amount),
+        strategy,
+        tx_hash: typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash
+      });
+
       
       // Refresh rUSDY balance
       const rusdyContract = new ethers.Contract(

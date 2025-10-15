@@ -434,9 +434,6 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           to_amount: Number.parseFloat(toAmount),
           amount_usd: Number.parseFloat(calculateUsdValue(fromAmount, fromToken)),
           tx_hash: cleanHash,
-          route: swapRoute?.route || `${fromToken}→${toToken}`,
-          price_impact: swapRoute?.priceImpact || null,
-          slippage_percent: slippage
         });
 
         window.dataLayer.push({
@@ -447,9 +444,6 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           to_amount: Number.parseFloat(toAmount),
           amount_usd: Number.parseFloat(calculateUsdValue(fromAmount, fromToken)),
           tx_hash: cleanHash,
-          route: swapRoute?.route || `${fromToken}→${toToken}`,
-          price_impact: swapRoute?.priceImpact || null,
-          slippage_percent: slippage
         });
 
 

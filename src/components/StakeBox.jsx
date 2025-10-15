@@ -6,6 +6,7 @@ import { useCurve } from "../contexts/CurveContext";
 import { usePool } from "../contexts/PoolContext";
 import { useRpcProvider } from "../contexts/RpcContext";
 import "./StakeBox.css";
+import { safePushToDataLayer } from "..curve/utility/gtm";
 
 const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 
@@ -239,6 +240,18 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       onShowToast?.("success", "Deposit successful!", typeof depositTx === 'string' ? depositTx : depositTx.hash);
       setAmount("");
 
+      safePushToDataLayer({
+        event: "stake_deposit",
+        amount_usd: Number(amount),
+        apy_percent:
+          strategy === "conservative"
+            ? CONSERVATIVE_APY
+            : Number(poolStats.enhancedApy).toFixed(2),
+        strategy,
+        tx_hash:
+          typeof depositTx === "string" ? depositTx : depositTx.hash,
+      });
+
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: 'stake_deposit',
@@ -321,11 +334,16 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       onShowToast?.("success", "Withdrawal successful!", typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash);
       setAmount("");
 
-      window.dataLayer.push({
-        event: 'stake_withdraw',
-        amount_usd: Number.parseFloat(amount),
+      safePushToDataLayer({
+        event: "stake_withdraw",
+        amount_usd: Number(amount),
+        apy_percent:
+          strategy === "conservative"
+            ? CONSERVATIVE_APY
+            : Number(poolStats.enhancedApy).toFixed(2),
         strategy,
-        tx_hash: typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash
+        tx_hash:
+          typeof withdrawTx === "string" ? withdrawTx : withdrawTx.hash,
       });
 
       

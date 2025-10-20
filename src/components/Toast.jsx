@@ -23,7 +23,7 @@ useEffect(() => {
           <p>{message}</p>
           {txHash && (
             <a
-              href={`https://solscan.io/tx/${txHash}`}
+              href={`https://etherscan.io/tx/${txHash}`}
               target="_blank"
               rel="noopener noreferrer"
               className="toast-link"

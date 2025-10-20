@@ -23,6 +23,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const [isLoading, setIsLoading] = useState(false);
   const autoHideTimer = useRef(null);
 
+  // store tx hash so modal can always show the Etherscan link while waiting/processing
+  const [txHash, setTxHash] = useState(null);
+
   const [mode, setMode] = useState("stake");
   const [strategy, setStrategy] = useState("enhanced");
   
@@ -192,6 +195,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
     setIsLoading(true);
     setStatus("Preparing deposit...");
+    setTxHash(null);
 
     try {
       const rusdyPool = pools.usdcRusdy;
@@ -229,21 +233,11 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       
       const txHash = typeof depositTx === 'string' ? depositTx : depositTx.hash;
       console.log("✅ Deposit tx submitted:", txHash);
-      setStatus(
-        <>
-          Waiting for confirmation...
-          <br />
-          <a 
-            href={`https://etherscan.io/tx/${txHash}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ color: '#4a9eff', textDecoration: 'underline', fontSize: '0.9em', marginTop: '8px', display: 'inline-block' }}
-          >
-            View on Etherscan
-          </a>
-        </>
-      );
-      
+      // store txHash separately so the modal can always render a link
+      setTxHash(txHash);
+      // keep status text simple — link is rendered by modal from txHash
+      setStatus("Waiting for confirmation...");
+
       const receipt = await provider.waitForTransaction(txHash);
       
       if (!receipt || receipt.status !== 1) throw new Error("Transaction failed");
@@ -325,6 +319,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
     setIsLoading(true);
     setStatus("Preparing withdrawal...");
+    setTxHash(null);
 
     try {
       const rusdyPool = pools.usdcRusdy;
@@ -338,21 +333,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       const txHash = typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash;
       console.log("✅ Withdrawal tx:", txHash);
-      setStatus(
-        <>
-          Waiting for confirmation...
-          <br />
-          <a 
-            href={`https://etherscan.io/tx/${txHash}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ color: '#4a9eff', textDecoration: 'underline', fontSize: '0.9em', marginTop: '8px', display: 'inline-block' }}
-          >
-            View on Etherscan
-          </a>
-        </>
-      );
-      
+      setTxHash(txHash);
+      setStatus("Waiting for confirmation...");
+
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const receipt = await provider.waitForTransaction(txHash);
       
@@ -427,6 +410,8 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   };
 
   const handleActionClick = () => {
+    // clear previous tx link
+    setTxHash(null);
     // ✅ PUSH TO DATALAYER ON CLICK (before any validation)
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
@@ -673,6 +658,18 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
               <p className="status-modal-text">
                 {status || "Waiting..."}
               </p>
+              {txHash && (
+                <div style={{ marginTop: 12 }}>
+                  <a
+                    href={`https://etherscan.io/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#4a9eff', textDecoration: 'underline', fontSize: '0.9em' }}
+                  >
+                    View on Etherscan
+                  </a>
+                </div>
+              )}
               {!isLoading && (
                 <button className="status-close-btn" onClick={() => setShowStatus(false)}>
                   Close

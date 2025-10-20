@@ -181,12 +181,12 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   // Execute Deposit (rUSDY → LP tokens) - USING CURVE.JS
   const executeDeposit = async () => {
     if (!account || !window.ethereum || !curveReady) {
-      onShowToast?.("error", "System not ready");
+      onShowToast?.("error", "Please wait while we connect to the network");
       return;
     }
 
     if (!amount || parseFloat(amount) <= 0) {
-      onShowToast?.("error", "Enter amount");
+      onShowToast?.("error", "Please enter an amount to deposit");
       return;
     }
 
@@ -216,7 +216,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       if (balance.lt(requiredAmount)) {
         const actualBalance = ethers.utils.formatUnits(balance, decimals);
-        onShowToast?.("error", `Need ${amount} rUSDY. You have: ${actualBalance} rUSDY. Swap USDC for rUSDY first!`);
+        onShowToast?.("error", `You need ${amount} rUSDY but only have ${parseFloat(actualBalance).toFixed(2)} rUSDY. Please swap USDC for rUSDY first.`);
         setIsLoading(false);
         return;
       }
@@ -227,17 +227,29 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       // deposit([usdc_amount, rusdy_amount], slippage)
       const depositTx = await rusdyPool.deposit([amount, 0], 0.1); // "0" rUSDY, USDC amount as string
       
-      console.log("✅ Deposit tx submitted:", depositTx);
-      setStatus("Waiting for confirmation...");
-      
-      const receipt = await provider.waitForTransaction(
-        typeof depositTx === 'string' ? depositTx : depositTx.hash
+      const txHash = typeof depositTx === 'string' ? depositTx : depositTx.hash;
+      console.log("✅ Deposit tx submitted:", txHash);
+      setStatus(
+        <>
+          Waiting for confirmation...
+          <br />
+          <a 
+            href={`https://etherscan.io/tx/${txHash}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: '#4a9eff', textDecoration: 'underline', fontSize: '0.9em', marginTop: '8px', display: 'inline-block' }}
+          >
+            View on Etherscan
+          </a>
+        </>
       );
+      
+      const receipt = await provider.waitForTransaction(txHash);
       
       if (!receipt || receipt.status !== 1) throw new Error("Transaction failed");
 
       console.log("✅ Deposit confirmed!");
-      onShowToast?.("success", "Deposit successful!", typeof depositTx === 'string' ? depositTx : depositTx.hash);
+      onShowToast?.("success", "Deposit successful!", txHash);
       setAmount("");
 
       safePushToDataLayer({
@@ -248,17 +260,16 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
             ? CONSERVATIVE_APY
             : Number(poolStats.enhancedApy).toFixed(2),
         strategy,
-        tx_hash:
-          typeof depositTx === "string" ? depositTx : depositTx.hash,
+        tx_hash: txHash,
       });
 
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: 'stake_deposit',
-        amount_usd: Number.parseFloat(amount), // your UI treats amount as USD-ish here
+        amount_usd: Number.parseFloat(amount),
         apy_percent: strategy === 'conservative' ? CONSERVATIVE_APY : Number(poolStats.enhancedApy).toFixed(2),
         strategy,
-        tx_hash: typeof depositTx === 'string' ? depositTx : depositTx.hash
+        tx_hash: txHash
       });
 
       // Refresh balances
@@ -281,12 +292,18 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       console.error("❌ Deposit error:", error);
       const msg = error.message || String(error);
       
-      if (msg.includes("user rejected") || msg.includes("denied")) {
-        onShowToast?.("error", "Transaction cancelled");
-      } else if (msg.includes("insufficient funds")) {
-        onShowToast?.("error", "Insufficient ETH for gas");
+      if (msg.includes("user rejected") || msg.includes("denied") || msg.includes("User denied")) {
+        onShowToast?.("error", "You cancelled the transaction. Please try again when ready.");
+      } else if (msg.includes("insufficient funds") || msg.includes("gas required exceeds")) {
+        onShowToast?.("error", "You don't have enough ETH to pay for gas fees. Please add ETH to your wallet.");
+      } else if (msg.includes("Pool not loaded")) {
+        onShowToast?.("error", "Pool is still loading. Please wait a moment and try again.");
+      } else if (msg.includes("execution reverted")) {
+        onShowToast?.("error", "Transaction failed. This might be due to insufficient allowance or balance. Please try again.");
+      } else if (msg.includes("network") || msg.includes("timeout")) {
+        onShowToast?.("error", "Network connection issue. Please check your internet and try again.");
       } else {
-        onShowToast?.("error", `Deposit failed: ${msg.slice(0, 60)}...`);
+        onShowToast?.("error", "Something went wrong with your deposit. Please try again or contact support.");
       }
     } finally {
       setIsLoading(false);
@@ -297,12 +314,12 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   // Execute Withdrawal (LP tokens → rUSDY) - USING CURVE.JS
   const executeWithdrawal = async () => {
     if (!account || !window.ethereum || !curveReady) {
-      onShowToast?.("error", "System not ready");
+      onShowToast?.("error", "Please wait while we connect to the network");
       return;
     }
 
     if (!amount || parseFloat(amount) <= 0) {
-      onShowToast?.("error", "Enter amount");
+      onShowToast?.("error", "Please enter an amount to withdraw");
       return;
     }
 
@@ -316,22 +333,32 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       setStatus("Withdrawing...");
       
       // ✅ USE CURVE.JS withdraw() METHOD
-      // withdraw(lpTokenAmount, slippage) - automatically withdraws to all coins proportionally
-      const RUSDY_INDEX = 0; // usually 0 = rUSDY, 1 = USDC — confirm via pool.coins
+      const RUSDY_INDEX = 0;
       const withdrawTx = await rusdyPool.withdrawOneCoin(amount, RUSDY_INDEX, 0.1);
 
-            
-      console.log("✅ Withdrawal tx:", withdrawTx);
-      setStatus("Waiting for confirmation...");
+      const txHash = typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash;
+      console.log("✅ Withdrawal tx:", txHash);
+      setStatus(
+        <>
+          Waiting for confirmation...
+          <br />
+          <a 
+            href={`https://etherscan.io/tx/${txHash}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: '#4a9eff', textDecoration: 'underline', fontSize: '0.9em', marginTop: '8px', display: 'inline-block' }}
+          >
+            View on Etherscan
+          </a>
+        </>
+      );
       
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const receipt = await provider.waitForTransaction(
-        typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash
-      );
+      const receipt = await provider.waitForTransaction(txHash);
       
       if (!receipt || receipt.status !== 1) throw new Error("Transaction failed");
 
-      onShowToast?.("success", "Withdrawal successful!", typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash);
+      onShowToast?.("success", "Withdrawal successful!", txHash);
       setAmount("");
 
       safePushToDataLayer({
@@ -342,11 +369,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
             ? CONSERVATIVE_APY
             : Number(poolStats.enhancedApy).toFixed(2),
         strategy,
-        tx_hash:
-          typeof withdrawTx === "string" ? withdrawTx : withdrawTx.hash,
+        tx_hash: txHash,
       });
 
-      
       // Refresh rUSDY balance
       const rusdyContract = new ethers.Contract(
         RUSDY_ADDRESS,
@@ -376,16 +401,24 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       console.error("❌ Withdrawal error:", error);
       const msg = error.message || String(error);
       
-      if (msg.includes("user rejected") || msg.includes("denied")) {
-        onShowToast?.("error", "Transaction cancelled");
-      } else if (msg.includes("fewer coins")) {
-        onShowToast?.("error", "Pool imbalanced. Try smaller amount");
+      if (msg.includes("user rejected") || msg.includes("denied") || msg.includes("User denied")) {
+        onShowToast?.("error", "You cancelled the transaction. Please try again when ready.");
+      } else if (msg.includes("fewer coins") || msg.includes("imbalanced")) {
+        onShowToast?.("error", "The pool doesn't have enough liquidity right now. Try withdrawing a smaller amount.");
       } else if (msg.includes("slippage")) {
-        onShowToast?.("error", "Price moved too much");
-      } else if (msg.includes("insufficient")) {
-        onShowToast?.("error", "Insufficient LP tokens");
+        onShowToast?.("error", "The price changed too much while processing. Please try again.");
+      } else if (msg.includes("insufficient") || msg.includes("exceeds balance")) {
+        onShowToast?.("error", "You don't have enough LP tokens to withdraw this amount.");
+      } else if (msg.includes("insufficient funds") || msg.includes("gas required exceeds")) {
+        onShowToast?.("error", "You don't have enough ETH to pay for gas fees. Please add ETH to your wallet.");
+      } else if (msg.includes("Pool not loaded")) {
+        onShowToast?.("error", "Pool is still loading. Please wait a moment and try again.");
+      } else if (msg.includes("execution reverted")) {
+        onShowToast?.("error", "Transaction failed. Please check your balance and try again.");
+      } else if (msg.includes("network") || msg.includes("timeout")) {
+        onShowToast?.("error", "Network connection issue. Please check your internet and try again.");
       } else {
-        onShowToast?.("error", "Withdrawal failed. Check console");
+        onShowToast?.("error", "Something went wrong with your withdrawal. Please try again or contact support.");
       }
     } finally {
       setIsLoading(false);

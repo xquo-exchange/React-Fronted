@@ -31,22 +31,20 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
         }
 
         let mode = null;
+        let walletProvider = null;
 
-        if (typeof window !== 'undefined' && window.ethereum) {
-          try {
-            await window.ethereum.request?.({ method: 'eth_requestAccounts' });
-          } catch (err) {
-            console.warn('Wallet connection denied');
-          }
-
-          const chainIdHex = await window.ethereum.request?.({ method: 'eth_chainId' }).catch(() => null);
+        // Try to get WalletConnect provider from window (set by WalletContext)
+        if (typeof window !== 'undefined' && window.walletConnectProvider) {
+          walletProvider = window.walletConnectProvider;
+          
+          const chainIdHex = await walletProvider.request?.({ method: 'eth_chainId' }).catch(() => null);
           const onMainnet = chainIdHex === '0x1' || chainIdHex === 1 || chainIdHex === '1';
 
           if (!onMainnet) {
             throw new Error('Please switch to Ethereum Mainnet');
           }
 
-          await curveInstance.init('Web3', { externalProvider: window.ethereum, chainId: 1 }, { gasPrice: 0 });
+          await curveInstance.init('Web3', { externalProvider: walletProvider, chainId: 1 }, { gasPrice: 0 });
           mode = 'web3';
         } else {
           const rpcUrl = import.meta.env.VITE_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2';
@@ -74,7 +72,7 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
 
         const [pd, wd] = await Promise.all([
           getPoolDetails(poolInstance),
-          getWalletDetails(poolInstance, mode === 'web3' ? window.ethereum : null),
+          getWalletDetails(poolInstance, mode === 'web3' ? walletProvider : null),
         ]);
 
         if (!mounted) return;

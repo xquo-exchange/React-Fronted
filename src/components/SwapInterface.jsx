@@ -18,7 +18,7 @@ const TOKEN_REGISTRY = {
 const CURVE_ROUTER_ADDRESS = "0xF0d4c12A5768D806021F80a262B4d39d26C58b8D";
 
 const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
-  const { walletAddress: account } = useWallet();
+  const { walletAddress: account, walletConnectProvider } = useWallet();
   const { curve, curveReady, pools } = useCurve();
   const provider = useRpcProvider();
 
@@ -185,7 +185,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
   };
 
   const executeSwap = async () => {
-    if (!account || !window.ethereum || !hasCalculated) {
+    if (!account || !walletConnectProvider || !hasCalculated) {
       onShowToast?.("error", "Calculate route first");
       return;
     }
@@ -208,7 +208,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
 
     try {
-      const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+      const web3Provider = new ethers.providers.Web3Provider(walletConnectProvider);
       const signer = web3Provider.getSigner();
 
       // Determine total steps
@@ -424,7 +424,8 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           TOKEN_REGISTRY[fromToken].address,
           TOKEN_REGISTRY[toToken].address,
           fromAmount,
-          slippage  // ✅ Pass 1.0 for 1%, not 0.01
+          slippage,
+          account  // ✅ Add receiver address to prevent "transfer to zero address"
         );
         const hash = typeof txHash === 'string' ? txHash : txHash.hash;
         setTxHash(hash);

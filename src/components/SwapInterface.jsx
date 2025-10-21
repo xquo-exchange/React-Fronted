@@ -424,8 +424,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           TOKEN_REGISTRY[fromToken].address,
           TOKEN_REGISTRY[toToken].address,
           fromAmount,
-          slippage,
-          account  // ✅ Add receiver address to prevent "transfer to zero address"
+          slippage  // ✅ Pass 1.0 for 1%, not 0.01
         );
         const hash = typeof txHash === 'string' ? txHash : txHash.hash;
         setTxHash(hash);

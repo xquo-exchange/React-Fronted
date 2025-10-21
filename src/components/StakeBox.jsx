@@ -11,7 +11,7 @@ import { safePushToDataLayer } from "../curve/utility/gtm";
 const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 
 const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
-  const { walletAddress: account, isConnected, connectWallet, walletConnectProvider } = useWallet();
+  const { walletAddress: account, isConnected, connectWallet } = useWallet();
   const { curve, curveReady, pools } = useCurve();
   const { poolData } = usePool();
   const rpcProvider = useRpcProvider();
@@ -183,7 +183,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
   // Execute Deposit (rUSDY → LP tokens) - USING CURVE.JS
   const executeDeposit = async () => {
-    if (!account || !walletConnectProvider || !curveReady) {
+    if (!account || !window.ethereum || !curveReady) {
       onShowToast?.("error", "Please wait while we connect to the network");
       return;
     }
@@ -201,7 +201,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       const rusdyPool = pools.usdcRusdy;
       if (!rusdyPool) throw new Error("Pool not loaded");
 
-      const provider = new ethers.providers.Web3Provider(walletConnectProvider);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
 
       // Get rUSDY contract to check balance
@@ -307,7 +307,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
   // Execute Withdrawal (LP tokens → rUSDY) - USING CURVE.JS
   const executeWithdrawal = async () => {
-    if (!account || !walletConnectProvider || !curveReady) {
+    if (!account || !window.ethereum || !curveReady) {
       onShowToast?.("error", "Please wait while we connect to the network");
       return;
     }
@@ -336,7 +336,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       setTxHash(txHash);
       setStatus("Waiting for confirmation...");
 
-      const provider = new ethers.providers.Web3Provider(walletConnectProvider);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       const receipt = await provider.waitForTransaction(txHash);
       
       if (!receipt || receipt.status !== 1) throw new Error("Transaction failed");

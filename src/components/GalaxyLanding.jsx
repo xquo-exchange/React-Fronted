@@ -8,7 +8,18 @@ const GalaxyLanding = ({ onConnect }) => {
   const stars = useRef([]);
   const trail = useRef([]);
   const animationFrameId = useRef(null);
+  const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
+    // Check if mobile
+    const checkMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobile(checkMobile);
+
+    // Check if MetaMask is installed (only if not mobile)
+    if (!checkMobile && typeof window.ethereum === 'undefined') {
+      setError('METAMASK_NOT_INSTALLED');
+    }
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -126,15 +137,27 @@ const GalaxyLanding = ({ onConnect }) => {
   }, []);
 
   const handleConnectClick = () => {
+    if (isMobile) {
+      return; // Do nothing on mobile
+    }
+    if (error === 'METAMASK_NOT_INSTALLED') {
+      window.open('https://metamask.io/download/', '_blank');
+      return;
+    }
     onConnect();
   };
 
   const getButtonText = () => {
+    if (isMobile) return 'Mobile Not Supported';
+    if (error === 'METAMASK_NOT_INSTALLED') return 'Install MetaMask';
     return 'Connect Wallet';
   };
 
   const getSubtitleText = () => {
-    return 'Connect your wallet to continue';
+    if (error === 'METAMASK_NOT_INSTALLED') {
+      return 'Please install a crypto wallet browser extension to continue';
+    }
+    return 'Connect wallet to continue';
   };
 
   return (
@@ -144,13 +167,17 @@ const GalaxyLanding = ({ onConnect }) => {
       <div className="galaxy-content">
         <div className="galaxy-hero">
           <img src={xquoLogo} alt="X-QUO" className="galaxy-logo" />
-          <p className="galaxy-subtitle">
+          <p className={`galaxy-subtitle ${(error || isMobile) ? 'galaxy-subtitle-error' : ''}`}>
             {getSubtitleText()}
+          </p>
+          <p className="galaxy-mobile-warning">
+            Not available on mobile
           </p>
           
           <button 
             onClick={handleConnectClick} 
-            className="galaxy-connect-btn"
+            className={`galaxy-connect-btn ${(isMobile) ? 'galaxy-connect-btn-disabled' : ''}`}
+            disabled={isMobile}
           >
             {getButtonText()}
           </button>

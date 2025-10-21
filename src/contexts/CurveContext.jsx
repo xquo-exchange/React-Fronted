@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import curve from '@curvefi/api';
-import { WalletContext } from './WalletContext';
 
 const CurveContext = createContext(null);
 
@@ -9,7 +8,6 @@ export function CurveProvider({ children }) {
   const [pools, setPools] = useState({});
   const [error, setError] = useState(null);
   const initPromise = useRef(null);
-  const { walletConnectProvider } = useContext(WalletContext);
 
   useEffect(() => {
     if (initPromise.current) return;
@@ -18,18 +16,14 @@ export function CurveProvider({ children }) {
       try {
         console.log('🔄 Initializing Curve (once)...');
         
-        // Wait for wallet connection or use fallback
-        const externalProvider = walletConnectProvider || null;
-        
+        const externalProvider = window.ethereum;
         if (!externalProvider) {
-          console.warn('No wallet connected, Curve may have limited functionality');
+          throw new Error('MetaMask not detected');
         }
 
         await curve.init(
-          externalProvider ? 'Web3' : 'JsonRpc',
-          externalProvider 
-            ? { externalProvider, chainId: 1 }
-            : { url: 'https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2', chainId: 1 },
+          'Web3',
+          { externalProvider, chainId: 1 },
           { gasPrice: 0 }
         );
 
@@ -56,7 +50,7 @@ export function CurveProvider({ children }) {
         setError(err.message);
       }
     })();
-  }, [walletConnectProvider]);
+  }, []);
 
   const value = {
     curve,

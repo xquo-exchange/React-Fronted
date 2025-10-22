@@ -187,6 +187,39 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* Calculating Status */
+.calculating-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  margin: 16px 0;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
+}
+
+.calculating-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-top-color: rgba(59, 130, 246, 0.8);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.calculating-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(59, 130, 246, 0.9);
+}
+
+/* Route Info - OLD DESIGN */
 .swap-route-info {
   background: transparent;
   border-radius: 12px;
@@ -214,6 +247,77 @@
 .swap-route-bold {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.slippage-editor-row {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slippage-controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.slippage-preset-buttons {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.slippage-preset-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.slippage-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.slippage-preset-btn.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+}
+
+.slippage-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0 10px;
+}
+
+.slippage-input {
+  width: 60px;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+}
+
+.slippage-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.slippage-percent {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Calculate Button (new) */

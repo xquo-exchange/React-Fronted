@@ -106,7 +106,6 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
     setSwapRoute(null);
     setToAmount("");
     setHasCalculated(false);
-    setStatus("🔍 Finding best route...");
 
     try {
       let output = "0";
@@ -117,35 +116,26 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         const rusdyPool = pools.usdcRusdy;
 
         if (fromToken === "ETH") {
-          setStatus("📊 Calculating ETH → USDC...");
           const usdcOut = await usdcPool.swapExpected("ETH", "USDC", fromAmount);
-
-          setStatus("📊 Calculating USDC → rUSDY...");
           const rusdyOut = await rusdyPool.swapExpected("USDC", TOKEN_REGISTRY.rUSDY.address, usdcOut);
           output = rusdyOut;
           route = "ETH → USDC → rUSDY";
         } else if (fromToken === "USDC") {
-          setStatus("📊 Calculating USDC → rUSDY...");
           output = await rusdyPool.swapExpected("USDC", TOKEN_REGISTRY.rUSDY.address, fromAmount);
           route = "USDC → rUSDY";
         }
       } else if (fromToken === "rUSDY") {
         const rusdyPool = pools.usdcRusdy;
         if (toToken === "USDC") {
-          setStatus("📊 Calculating rUSDY → USDC...");
           output = await rusdyPool.swapExpected(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount);
           route = "rUSDY → USDC";
         } else if (toToken === "ETH") {
-          setStatus("📊 Calculating rUSDY → USDC...");
           const usdcOut = await rusdyPool.swapExpected(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount);
-
-          setStatus("📊 Calculating USDC → ETH...");
           const ethOut = await pools.ethUsdc.swapExpected("USDC", "ETH", usdcOut);
           output = ethOut;
           route = "rUSDY → USDC → ETH";
         }
       } else {
-        setStatus("🔍 Searching Curve pools...");
         const result = await curve.router.getBestRouteAndOutput(
           TOKEN_REGISTRY[fromToken].address,
           TOKEN_REGISTRY[toToken].address,
@@ -170,15 +160,10 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       }
 
       setHasCalculated(true);
-      setStatus("✅ Route calculated!");
       onShowToast?.("success", "Route calculated!");
-
-      setTimeout(() => setStatus(""), 2000);
     } catch (error) {
       console.error("❌ Calculation error:", error);
-      setStatus("❌ Route calculation failed");
       onShowToast?.("error", "Route calculation failed");
-      setTimeout(() => setStatus(""), 3000);
     } finally {
       setIsCalculating(false);
     }
@@ -659,6 +644,14 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           ≈ ${calculateUsdValue(toAmount, toToken)}
         </div>
       </div>
+
+      {/* Calculating Status */}
+      {isCalculating && (
+        <div className="calculating-status">
+          <div className="calculating-spinner"></div>
+          <span className="calculating-text">Finding best route...</span>
+        </div>
+      )}
 
       {swapRoute && (
         <div className="swap-route-info">

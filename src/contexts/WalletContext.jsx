@@ -68,8 +68,15 @@ export const WalletProvider = ({ children }) => {
       wcProvider.on('chainChanged', (chainIdHex) => {
         console.log('🔄 Chain changed:', chainIdHex);
         const newChainId = parseInt(chainIdHex, 16);
-        setChainId(newChainId);
-        window.location.reload();
+        
+        // Only reload if chain actually changed from current state
+        if (chainId && chainId !== newChainId) {
+          setChainId(newChainId);
+          window.location.reload();
+        } else {
+          // First time setting chain, don't reload
+          setChainId(newChainId);
+        }
       });
 
       wcProvider.on('disconnect', () => {

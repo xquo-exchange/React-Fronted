@@ -49,7 +49,7 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
           await curveInstance.init('Web3', { externalProvider: window.ethereum, chainId: 1 }, { gasPrice: 0 });
           mode = 'web3';
         } else {
-          const rpcUrl = import.meta.env.VITE_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2';
+          const rpcUrl = import.meta.env.VITE_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/ea960234de134c39aede4f75ea416681';
           await curveInstance.init('JsonRpc', { url: rpcUrl, chainId: 1 }, { gasPrice: 0 });
           mode = 'rpc';
         }

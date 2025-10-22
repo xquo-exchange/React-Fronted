@@ -6,7 +6,7 @@ const RpcContext = createContext(null);
 export function RpcProvider({ children }) {
   const provider = useMemo(() => {
     return new ethers.providers.JsonRpcProvider(
-      "https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2"
+      "https://mainnet.infura.io/v3/ea960234de134c39aede4f75ea416681"
     );
   }, []); // Create ONCE
 

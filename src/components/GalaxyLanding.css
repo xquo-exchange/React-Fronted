@@ -81,6 +81,10 @@
   transition: all 0.2s ease;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .galaxy-connect-btn:hover {
@@ -108,14 +112,72 @@
 
 @media (max-width: 768px) {
   .galaxy-logo {
-    height: 60px;
+    height: 64px;
   }
   
   .galaxy-subtitle {
-    font-size: 15px;
+    font-size: clamp(14px, 3.5vw, 16px);
   }
   
   .galaxy-mobile-warning {
     font-size: 13px;
+  }
+  
+  .galaxy-content {
+    padding: 80px 20px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .galaxy-logo {
+    height: 56px;
+    margin-bottom: 20px;
+  }
+  
+  .galaxy-subtitle {
+    font-size: clamp(13px, 3.5vw, 15px);
+    margin-bottom: 6px;
+  }
+  
+  .galaxy-mobile-warning {
+    font-size: 12px;
+    margin-bottom: 28px;
+  }
+  
+  .galaxy-connect-btn {
+    padding: 12px 28px;
+    font-size: 14px;
+    min-height: 50px;
+  }
+  
+  .galaxy-content {
+    padding: 70px 16px 16px;
+  }
+}
+
+@media (max-width: 390px) {
+  .galaxy-logo {
+    height: 52px;
+    margin-bottom: 18px;
+  }
+  
+  .galaxy-subtitle {
+    font-size: 13px;
+  }
+  
+  .galaxy-mobile-warning {
+    font-size: 11px;
+    margin-bottom: 24px;
+  }
+  
+  .galaxy-connect-btn {
+    width: 100%;
+    max-width: 280px;
+    padding: 12px 24px;
+    font-size: 13px;
+  }
+  
+  .galaxy-content {
+    padding: 60px 12px 12px;
   }
 }

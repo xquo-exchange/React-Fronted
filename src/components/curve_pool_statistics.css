@@ -90,6 +90,10 @@
   cursor: pointer;
   transition: all 0.2s;
   opacity: 0.6;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab.active {
@@ -345,5 +349,182 @@
   .pool-details-grid,
   .details-split {
     grid-template-columns: 1fr;
+  }
+  
+  .cps-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .cps-card {
+    padding: 12px;
+  }
+  
+  .cps-title {
+    font-size: 16px;
+  }
+  
+  .cps-subtitle {
+    font-size: 13px;
+  }
+  
+  .cps-stat-label {
+    font-size: 11px;
+  }
+  
+  .cps-stat-value {
+    font-size: 14px;
+  }
+  
+  .pool-container {
+    border-radius: 10px;
+  }
+  
+  .tab {
+    padding: 14px;
+    font-size: 13px;
+  }
+  
+  .tab-content {
+    padding: 16px;
+  }
+  
+  .section-title {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+  
+  .reserve {
+    padding: 10px;
+  }
+  
+  .reserve-name {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cps-card {
+    padding: 10px;
+  }
+  
+  .cps-columns {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .cps-stat {
+    padding: 8px;
+  }
+  
+  .cps-title {
+    font-size: 15px;
+  }
+  
+  .cps-subtitle {
+    font-size: 12px;
+  }
+  
+  .cps-stat-label {
+    font-size: 10px;
+  }
+  
+  .cps-stat-value {
+    font-size: 13px;
+  }
+  
+  .tab {
+    padding: 12px;
+    font-size: 12px;
+    min-height: 44px;
+  }
+  
+  .tab-content {
+    padding: 14px;
+  }
+  
+  .section-title {
+    font-size: 14px;
+  }
+  
+  .reserve {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px;
+  }
+  
+  .token-values {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .reserve-name {
+    font-size: 13px;
+  }
+  
+  .reserve-balance {
+    font-size: 14px;
+  }
+  
+  .reserve-percent {
+    font-size: 12px;
+  }
+  
+  .vapy-box {
+    padding: 10px;
+  }
+  
+  .detail-item {
+    font-size: 13px;
+  }
+  
+  .contracts {
+    padding: 12px;
+  }
+  
+  .contracts h4 {
+    font-size: 13px;
+  }
+  
+  .contracts p {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .cps-card {
+    padding: 8px;
+  }
+  
+  .cps-title {
+    font-size: 14px;
+  }
+  
+  .cps-stat {
+    padding: 6px;
+  }
+  
+  .tab {
+    padding: 10px;
+    font-size: 11px;
+  }
+  
+  .tab-content {
+    padding: 12px;
+  }
+  
+  .section-title {
+    font-size: 13px;
+  }
+  
+  .reserve-name,
+  .reserve-balance {
+    font-size: 12px;
+  }
+  
+  .detail-item {
+    font-size: 12px;
   }
 }

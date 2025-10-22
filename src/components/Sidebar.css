@@ -33,6 +33,7 @@
   cursor: pointer;
   transition: all 0.15s ease;
   min-width: 0; /* Allow shrinking on small screens */
+  min-height: 44px;
 }
 
 .swap-button:hover,
@@ -70,15 +71,55 @@
   }
 }
 
-/* Extra small screens */
+/* Large phones / small tablets */
 @media (max-width: 640px) {
   .sidebar-box {
-    width: calc(100% - 32px);
-    margin: 0 16px 24px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 20px 0;
   }
   
   .s-text,
   .d-text {
     font-size: 13px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .sidebar-box {
+    padding: 6px;
+  }
+  
+  .swap-button,
+  .deposit-button {
+    padding: 12px 16px;
+    min-height: 48px;
+  }
+  
+  .s-text,
+  .d-text {
+    font-size: 12px;
+  }
+  
+  .buttons {
+    gap: 3px;
+  }
+}
+
+/* Tiny phones */
+@media (max-width: 390px) {
+  .sidebar-box {
+    padding: 5px;
+  }
+  
+  .swap-button,
+  .deposit-button {
+    padding: 10px 12px;
+  }
+  
+  .s-text,
+  .d-text {
+    font-size: 11px;
   }
 }

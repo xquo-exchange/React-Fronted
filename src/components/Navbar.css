@@ -92,6 +92,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wallet-button.connect {
@@ -241,5 +245,80 @@
   
   .navbar-logo-image {
     height: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    padding: 14px 20px;
+  }
+  
+  .navbar-logo-image {
+    height: 26px;
+  }
+  
+  .wallet-dropdown {
+    right: 20px;
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 14px 16px;
+  }
+  
+  .navbar-logo-image {
+    height: 24px;
+  }
+  
+  .navbar-right {
+    gap: 12px;
+  }
+  
+  .wallet-button {
+    padding: 10px 18px;
+    font-size: 12px;
+  }
+  
+  .wallet-dropdown {
+    right: 16px;
+    left: 16px;
+    min-width: auto;
+  }
+  
+  .network-badge {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .navbar {
+    padding: 12px 12px;
+  }
+  
+  .navbar-logo-image {
+    height: 22px;
+  }
+  
+  .wallet-button {
+    padding: 8px 14px;
+    font-size: 11px;
+    min-height: 40px;
+  }
+  
+  .navbar-right {
+    gap: 8px;
+  }
+  
+  .wallet-dropdown {
+    right: 12px;
+    left: 12px;
+  }
+  
+  .dropdown-item {
+    padding: 12px 14px;
+    font-size: 13px;
   }
 }

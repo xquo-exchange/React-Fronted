@@ -39,13 +39,49 @@ body, #root {
     flex-direction: column;
     padding-left: 24px;
     padding-right: 24px;
-    gap: 40px;
+    gap: clamp(24px, 5vw, 40px);
   }
 }
 
 @media (max-width: 768px) {
   .app-container {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 70px;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-container {
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 68px;
+    gap: 20px;
+  }
+  
+  .main-content {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-container {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 66px;
+    gap: 16px;
+  }
+  
+  .main-content {
+    gap: 20px;
   }
 }

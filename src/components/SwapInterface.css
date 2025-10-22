@@ -174,6 +174,8 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .swap-direction-button:hover {
@@ -617,6 +619,160 @@
   }
   
   .swap-amount-input {
-    font-size: 24px;
+    font-size: clamp(24px, 6vw, 32px);
+  }
+}
+
+@media (max-width: 640px) {
+  .swap-interface-container {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  
+  .swap-interface-title {
+    font-size: 18px;
+    margin-bottom: 24px;
+  }
+  
+  .swap-token-box {
+    padding: 16px;
+  }
+  
+  .swap-amount-input {
+    font-size: clamp(22px, 6vw, 28px);
+  }
+  
+  .swap-route-info {
+    padding: 12px 0;
+  }
+  
+  .slippage-controls {
+    flex-wrap: wrap;
+  }
+  
+  .calculate-route-btn {
+    min-height: 52px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .swap-interface-container {
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .swap-interface-title {
+    font-size: 17px;
+    margin-bottom: 20px;
+  }
+  
+  .swap-token-box {
+    padding: 14px;
+    margin-bottom: 6px;
+  }
+  
+  .swap-amount-input {
+    font-size: clamp(20px, 6vw, 24px);
+    width: 100%;
+  }
+  
+  .swap-token-input-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .swap-token-select-wrapper {
+    width: 100%;
+    max-width: 180px;
+  }
+  
+  .swap-direction-button {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 14px;
+  }
+  
+  .swap-direction-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .calculate-route-btn {
+    padding: 16px 24px;
+    font-size: 14px;
+    min-height: 52px;
+  }
+  
+  .slippage-preset-buttons {
+    flex-wrap: wrap;
+  }
+  
+  .slippage-preset-btn {
+    min-height: 44px;
+    font-size: 12px;
+  }
+  
+  .slippage-custom-input {
+    min-height: 44px;
+  }
+  
+  .swap-route-row {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .swap-interface-container {
+    padding: 14px;
+  }
+  
+  .swap-interface-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .swap-token-box {
+    padding: 12px;
+  }
+  
+  .swap-balance-label {
+    font-size: 11px;
+  }
+  
+  .swap-amount-input {
+    font-size: 18px;
+  }
+  
+  .swap-token-select {
+    font-size: 13px;
+    padding: 8px 32px 8px 12px;
+  }
+  
+  .slippage-preset-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .slippage-preset-btn {
+    width: 100%;
+  }
+  
+  .slippage-controls {
+    flex-direction: column;
+  }
+  
+  .slippage-custom-input {
+    width: 100%;
+  }
+  
+  .calculate-route-btn {
+    padding: 14px 20px;
+    font-size: 13px;
+  }
+  
+  .swap-route-row {
+    font-size: 11px;
   }
 }

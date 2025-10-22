@@ -92,6 +92,8 @@
   transition: opacity 0.15s;
   flex-shrink: 0;
   opacity: 0.6;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .toast-close:hover {
@@ -100,9 +102,54 @@
 
 @media (max-width: 640px) {
   .toast {
-    left: 24px;
-    right: 24px;
+    left: 20px;
+    right: 20px;
     min-width: auto;
     top: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toast {
+    left: 16px;
+    right: 16px;
+    top: 78px;
+    padding: 14px 16px;
+  }
+  
+  .toast-message p {
+    font-size: 12px;
+  }
+  
+  .toast-link {
+    font-size: 11px;
+  }
+  
+  .toast-close {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 390px) {
+  .toast {
+    left: 12px;
+    right: 12px;
+    top: 76px;
+    padding: 12px 14px;
+  }
+  
+  .toast-message p {
+    font-size: 11px;
+  }
+  
+  .toast-icon {
+    font-size: 14px;
+  }
+  
+  .toast-close {
+    min-width: 44px;
+    min-height: 44px;
   }
 }

@@ -1,123 +1,105 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { ethers } from 'ethers';
+import { initWalletConnect } from '../utils/walletconnectProvider';
 
 export const WalletContext = createContext();
 
 export const WalletProvider = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [provider, setProvider] = useState(null);
   const [chainId, setChainId] = useState(null);
+  const [walletType] = useState('walletconnect');
+  const wcProviderRef = useRef(null);
 
-  // Check if MetaMask is installed
+  // Auto-reconnect on mount if previously connected
   useEffect(() => {
-    const checkMetaMask = () => {
-      if (typeof window.ethereum !== 'undefined') {
-        setIsMetaMaskInstalled(true);
-        const ethProvider = new ethers.providers.Web3Provider(window.ethereum);
-        setProvider(ethProvider);
-
-        // Only auto-connect if previously connected
-        const wasConnected = localStorage.getItem('walletConnected');
-        if (wasConnected === 'true') {
-          ethProvider.listAccounts().then((accounts) => {
-            if (accounts.length > 0) {
-              setWalletAddress(accounts[0]);
-              setIsConnected(true);
-              ethProvider.getNetwork().then((network) => {
-                setChainId(network.chainId);
-              });
-            } else {
-              // User disconnected from MetaMask directly
-              localStorage.removeItem('walletConnected');
-            }
-          });
+    const autoConnect = async () => {
+      const wasConnected = localStorage.getItem('walletConnected');
+      if (wasConnected === 'true') {
+        try {
+          console.log('🔄 Auto-reconnecting wallet...');
+          await connectWallet();
+        } catch (error) {
+          console.error('Auto-reconnect failed:', error);
+          localStorage.removeItem('walletConnected');
         }
-      } else {
-        setIsMetaMaskInstalled(false);
       }
     };
 
-    checkMetaMask();
+    autoConnect();
+  }, []);
 
-    // Listen for account changes
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setIsConnected(true);
-          // Only set localStorage if user is intentionally connected
-          const wasConnected = localStorage.getItem('walletConnected');
-          if (wasConnected === 'true') {
-            localStorage.setItem('walletConnected', 'true');
-          }
-        } else {
-          // User disconnected from MetaMask extension
-          setWalletAddress(null);
-          setIsConnected(false);
-          localStorage.removeItem('walletConnected');
-        }
-      });
-
-      window.ethereum.on('chainChanged', (chainIdHex) => {
-        const newChainId = parseInt(chainIdHex, 16);
-        setChainId(newChainId);
-        window.location.reload(); // Recommended by MetaMask
-      });
-    }
-
+  // Cleanup event listeners on unmount
+  useEffect(() => {
     return () => {
-      if (window.ethereum) {
-        window.ethereum.removeAllListeners('accountsChanged');
-        window.ethereum.removeAllListeners('chainChanged');
+      if (wcProviderRef.current) {
+        wcProviderRef.current.removeAllListeners();
       }
     };
   }, []);
 
-  // Connect wallet
+  // Connect wallet via WalletConnect
   const connectWallet = useCallback(async () => {
-    if (!isMetaMaskInstalled) {
-      return {
-        success: false,
-        error: 'WALLET_NOT_INSTALLED',
-        message: 'MetaMask not detected. Please install MetaMask. If the problem continues, contact loremipsum@x-quo.com.',
-      };
-    }
-
     setConnecting(true);
     try {
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
+      console.log('🔗 Initializing WalletConnect...');
+      const wcProvider = await initWalletConnect();
+      wcProviderRef.current = wcProvider;
+
+      // Create ethers provider
+      const ethersProvider = new ethers.providers.Web3Provider(wcProvider);
+      const signer = ethersProvider.getSigner();
+      const address = await signer.getAddress();
+      const network = await ethersProvider.getNetwork();
+
+      // Set up event listeners
+      wcProvider.on('accountsChanged', (accounts) => {
+        console.log('🔄 Accounts changed:', accounts);
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          setIsConnected(true);
+        } else {
+          handleDisconnect();
+        }
       });
 
-      if (accounts.length > 0) {
-        setWalletAddress(accounts[0]);
-        setIsConnected(true);
+      wcProvider.on('chainChanged', (chainIdHex) => {
+        console.log('🔄 Chain changed:', chainIdHex);
+        const newChainId = parseInt(chainIdHex, 16);
+        setChainId(newChainId);
+        window.location.reload();
+      });
 
-        const ethProvider = new ethers.providers.Web3Provider(window.ethereum);
-        setProvider(ethProvider);
-        const network = await ethProvider.getNetwork();
-        setChainId(network.chainId);
+      wcProvider.on('disconnect', () => {
+        console.log('🔌 WalletConnect disconnected');
+        handleDisconnect();
+      });
 
-        localStorage.setItem('walletConnected', 'true');
-        setConnecting(false);
-
-        return {
-          success: true,
-          address: accounts[0],
-          chainId: network.chainId,
-        };
-      }
-    } catch (error) {
+      // Update state
+      setWalletAddress(address);
+      setIsConnected(true);
+      setProvider(ethersProvider);
+      setChainId(network.chainId);
+      localStorage.setItem('walletConnected', 'true');
       setConnecting(false);
 
-      if (error.code === 4001) {
+      console.log('✅ Wallet connected:', address);
+      return {
+        success: true,
+        address,
+        chainId: network.chainId,
+      };
+    } catch (error) {
+      setConnecting(false);
+      console.error('❌ WalletConnect error:', error);
+
+      if (error.message?.includes('User rejected') || error.message?.includes('User closed modal')) {
         return {
           success: false,
           error: 'USER_REJECTED_SIGNATURE',
-          message: 'Signature declined. You can retry anytime.',
+          message: 'Connection declined. You can retry anytime.',
         };
       }
 
@@ -127,41 +109,56 @@ export const WalletProvider = ({ children }) => {
         message: 'Failed to connect wallet. Please try again.',
       };
     }
-  }, [isMetaMaskInstalled]);
+  }, []);
 
   // Disconnect wallet
   const disconnectWallet = useCallback(async () => {
-    // Clear local state
+    try {
+      if (wcProviderRef.current) {
+        await wcProviderRef.current.disconnect();
+      }
+      handleDisconnect();
+      return {
+        success: true,
+        message: 'Wallet disconnected successfully.',
+      };
+    } catch (error) {
+      console.error('Disconnect error:', error);
+      handleDisconnect();
+      return {
+        success: true,
+        message: 'Wallet disconnected.',
+      };
+    }
+  }, []);
+
+  // Helper to clear state on disconnect
+  const handleDisconnect = () => {
     setWalletAddress(null);
     setIsConnected(false);
     setChainId(null);
-    
-    // Clear localStorage flag
+    setProvider(null);
     localStorage.removeItem('walletConnected');
-    
-    // Optionally, you can ask the user to disconnect from MetaMask manually
-    // since MetaMask doesn't have a programmatic disconnect
-    
-    return { 
-      success: true,
-      message: 'Wallet disconnected. To fully disconnect, please disconnect from MetaMask extension.'
-    };
-  }, []);
+    if (wcProviderRef.current) {
+      wcProviderRef.current.removeAllListeners();
+      wcProviderRef.current = null;
+    }
+  };
 
   // Switch to Ethereum mainnet
   const switchToMainnet = useCallback(async () => {
-    if (!window.ethereum) {
+    if (!wcProviderRef.current) {
       return {
         success: false,
-        error: 'WALLET_NOT_INSTALLED',
-        message: 'MetaMask not installed.',
+        error: 'NOT_CONNECTED',
+        message: 'Wallet not connected.',
       };
     }
 
     try {
-      await window.ethereum.request({
+      await wcProviderRef.current.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x1' }], // Ethereum mainnet
+        params: [{ chainId: '0x1' }],
       });
       return { success: true };
     } catch (error) {
@@ -172,7 +169,7 @@ export const WalletProvider = ({ children }) => {
           message: 'Network switch declined.',
         };
       }
-      
+
       return {
         success: false,
         error: 'CHAIN_NOT_SUPPORTED',
@@ -264,18 +261,24 @@ export const WalletProvider = ({ children }) => {
     }
   }, [provider, isConnected]);
 
+  // Expose WalletConnect provider for Curve integration
+  const getWalletConnectProvider = useCallback(() => {
+    return wcProviderRef.current;
+  }, []);
+
   const value = {
     walletAddress,
     isConnected,
-    isMetaMaskInstalled,
     connecting,
     provider,
     chainId,
+    walletType,
     connectWallet,
     disconnectWallet,
     switchToMainnet,
     checkBalance,
     approveTransaction,
+    getWalletConnectProvider,
   };
 
   return (

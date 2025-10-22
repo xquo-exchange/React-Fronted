@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import curve from '@curvefi/api';
+import { useWallet } from '../hooks/useWallet';
 
 const CurveContext = createContext(null);
 
@@ -8,17 +9,27 @@ export function CurveProvider({ children }) {
   const [pools, setPools] = useState({});
   const [error, setError] = useState(null);
   const initPromise = useRef(null);
+  const { getWalletConnectProvider, isConnected } = useWallet();
 
   useEffect(() => {
+    // Only initialize Curve after wallet is connected
+    if (!isConnected) {
+      setCurveReady(false);
+      setPools({});
+      setError(null);
+      initPromise.current = null;
+      return;
+    }
+
     if (initPromise.current) return;
 
     initPromise.current = (async () => {
       try {
         console.log('🔄 Initializing Curve (once)...');
         
-        const externalProvider = window.ethereum;
+        const externalProvider = getWalletConnectProvider();
         if (!externalProvider) {
-          throw new Error('MetaMask not detected');
+          throw new Error('WalletConnect provider not available');
         }
 
         await curve.init(
@@ -50,7 +61,7 @@ export function CurveProvider({ children }) {
         setError(err.message);
       }
     })();
-  }, []);
+  }, [isConnected, getWalletConnectProvider]);
 
   const value = {
     curve,

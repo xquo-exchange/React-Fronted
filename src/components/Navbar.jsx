@@ -7,7 +7,6 @@ const Navbar = ({ onShowToast }) => {
   const {
     walletAddress,
     isConnected,
-    isMetaMaskInstalled,
     connecting,
     chainId,
     connectWallet,
@@ -77,7 +76,7 @@ const Navbar = ({ onShowToast }) => {
             onClick={handleConnect}
             disabled={connecting}
           >
-            {connecting ? "Connecting..." : "Connect MetaMask"}
+            {connecting ? "Connecting..." : "Connect Wallet"}
           </button>
         ) : (
           <div className="wallet-connected">
@@ -128,4 +127,3 @@ const Navbar = ({ onShowToast }) => {
 };
 
 export default Navbar;
-

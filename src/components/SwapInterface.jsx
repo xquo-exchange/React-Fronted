@@ -18,7 +18,7 @@ const TOKEN_REGISTRY = {
 const CURVE_ROUTER_ADDRESS = "0xF0d4c12A5768D806021F80a262B4d39d26C58b8D";
 
 const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
-  const { walletAddress: account } = useWallet();
+  const { walletAddress: account, provider: walletProvider } = useWallet();
   const { curve, curveReady, pools } = useCurve();
   const provider = useRpcProvider();
 
@@ -185,7 +185,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
   };
 
   const executeSwap = async () => {
-    if (!account || !window.ethereum || !hasCalculated) {
+    if (!account || !walletProvider || !hasCalculated) {
       onShowToast?.("error", "Calculate route first");
       return;
     }
@@ -208,8 +208,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
 
     try {
-      const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = web3Provider.getSigner();
+      const signer = walletProvider.getSigner();
 
       // Determine total steps
       let steps = 1; // Base swap
@@ -324,7 +323,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setTxHash(hash1);
 
           setStatus(`⏳ Waiting for ETH → USDC tx... (${hash1.slice(0, 10)}...)`);
-          const receipt1 = await web3Provider.waitForTransaction(hash1);
+          const receipt1 = await walletProvider.waitForTransaction(hash1);
 
           if (receipt1.status !== 1) throw new Error("First swap failed");
           setStatus(`✅ ETH → USDC complete!`);
@@ -332,7 +331,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           const usdcContract = new ethers.Contract(
             TOKEN_REGISTRY.USDC.address,
             ["function balanceOf(address) view returns (uint256)"],
-            web3Provider
+            walletProvider
           );
           const usdcBal = await usdcContract.balanceOf(account);
           const usdcAmount = ethers.utils.formatUnits(usdcBal, 6);
@@ -347,7 +346,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setTxHash(hash2);
 
           setStatus(`⏳ Waiting for USDC → rUSDY tx... (${hash2.slice(0, 10)}...)`);
-          receipt = await web3Provider.waitForTransaction(hash2);
+          receipt = await walletProvider.waitForTransaction(hash2);
 
         } else if (fromToken === "USDC") {
           setCurrentStep(2);
@@ -360,7 +359,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setTxHash(hash);
 
           setStatus(`⏳ Waiting for confirmation... (${hash.slice(0, 10)}...)`);
-          receipt = await web3Provider.waitForTransaction(hash);
+          receipt = await walletProvider.waitForTransaction(hash);
         }
       } else if (fromToken === "rUSDY") {
         const rusdyPool = pools.usdcRusdy;
@@ -376,7 +375,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setTxHash(hash);
 
           setStatus(`⏳ Waiting for confirmation... (${hash.slice(0, 10)}...)`);
-          receipt = await web3Provider.waitForTransaction(hash);
+          receipt = await walletProvider.waitForTransaction(hash);
 
         } else if (toToken === "ETH") {
           setCurrentStep(2);
@@ -389,7 +388,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setTxHash(hash1);
 
           setStatus(`⏳ Waiting for rUSDY → USDC tx... (${hash1.slice(0, 10)}...)`);
-          const receipt1 = await web3Provider.waitForTransaction(hash1);
+          const receipt1 = await walletProvider.waitForTransaction(hash1);
 
           if (receipt1.status !== 1) throw new Error("First swap failed");
           setStatus(`✅ rUSDY → USDC complete!`);
@@ -397,7 +396,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           const usdcContract = new ethers.Contract(
             TOKEN_REGISTRY.USDC.address,
             ["function balanceOf(address) view returns (uint256)"],
-            web3Provider
+            walletProvider
           );
           const usdcBal = await usdcContract.balanceOf(account);
           const usdcAmount = ethers.utils.formatUnits(usdcBal, 6);
@@ -412,7 +411,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setTxHash(hash2);
 
           setStatus(`⏳ Waiting for USDC → ETH tx... (${hash2.slice(0, 10)}...)`);
-          receipt = await web3Provider.waitForTransaction(hash2);
+          receipt = await walletProvider.waitForTransaction(hash2);
         }
       } else {
         setCurrentStep(fromToken === "ETH" ? 1 : 2);
@@ -430,7 +429,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         setTxHash(hash);
 
         setStatus(`⏳ Waiting for confirmation... (${hash.slice(0, 10)}...)`);
-        receipt = await web3Provider.waitForTransaction(hash);
+        receipt = await walletProvider.waitForTransaction(hash);
       }
 
       if (receipt && receipt.status === 1) {
@@ -482,7 +481,7 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
         setStatus("🔄 Refreshing balances...");
         balanceFetchRef.current = false;
-        const ethBal = await web3Provider.getBalance(account);
+        const ethBal = await walletProvider.getBalance(account);
         const newBalances = { ...balances, ETH: ethers.utils.formatEther(ethBal) };
 
         for (const [key, token] of Object.entries(TOKEN_REGISTRY)) {

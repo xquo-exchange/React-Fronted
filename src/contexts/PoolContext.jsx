@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { getPoolDetails } from '../curve/utility/PoolInfo.js';
 import { getWalletDetails } from '../curve/utility/WalletInfo.js';
+import { useWallet } from '../hooks/useWallet';
 
 const PoolContext = createContext(null);
 
@@ -15,6 +16,8 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
     error: null,
     lastUpdated: null,
   });
+
+  const { getWalletConnectProvider, isConnected } = useWallet();
 
   useEffect(() => {
     let mounted = true;
@@ -31,25 +34,32 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
         }
 
         let mode = null;
+        let externalProvider = null;
 
-        if (typeof window !== 'undefined' && window.ethereum) {
-          try {
-            await window.ethereum.request?.({ method: 'eth_requestAccounts' });
-          } catch (err) {
-            console.warn('Wallet connection denied');
+        if (isConnected) {
+          externalProvider = getWalletConnectProvider();
+          
+          if (externalProvider) {
+            try {
+              const chainIdHex = await externalProvider.request?.({ method: 'eth_chainId' }).catch(() => null);
+              const onMainnet = chainIdHex === '0x1' || chainIdHex === 1 || chainIdHex === '1';
+
+              if (!onMainnet) {
+                throw new Error('Please switch to Ethereum Mainnet');
+              }
+
+              await curveInstance.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
+              mode = 'web3';
+            } catch (err) {
+              console.warn('Web3 initialization failed, falling back to RPC:', err);
+              mode = null;
+            }
           }
-
-          const chainIdHex = await window.ethereum.request?.({ method: 'eth_chainId' }).catch(() => null);
-          const onMainnet = chainIdHex === '0x1' || chainIdHex === 1 || chainIdHex === '1';
-
-          if (!onMainnet) {
-            throw new Error('Please switch to Ethereum Mainnet');
-          }
-
-          await curveInstance.init('Web3', { externalProvider: window.ethereum, chainId: 1 }, { gasPrice: 0 });
-          mode = 'web3';
-        } else {
-          const rpcUrl = import.meta.env.VITE_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/ea960234de134c39aede4f75ea416681';
+        }
+        
+        // Fallback to RPC mode if wallet not connected or Web3 init failed
+        if (!mode) {
+          const rpcUrl = import.meta.env.VITE_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2';
           await curveInstance.init('JsonRpc', { url: rpcUrl, chainId: 1 }, { gasPrice: 0 });
           mode = 'rpc';
         }
@@ -74,7 +84,7 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
 
         const [pd, wd] = await Promise.all([
           getPoolDetails(poolInstance),
-          getWalletDetails(poolInstance, mode === 'web3' ? window.ethereum : null),
+          getWalletDetails(poolInstance, mode === 'web3' ? externalProvider : null),
         ]);
 
         if (!mounted) return;
@@ -108,7 +118,7 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
 
     init();
     return () => { mounted = false; };
-  }, [poolId]);
+  }, [poolId, isConnected, getWalletConnectProvider]);
 
   const value = useMemo(
     () => ({ curve, pool, poolData, walletData, status }),

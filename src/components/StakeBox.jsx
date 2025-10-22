@@ -13,7 +13,7 @@ const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const { walletAddress: account, isConnected, connectWallet, provider: walletProvider } = useWallet();
   const { curve, curveReady, pools } = useCurve();
-  const { poolData } = usePool();
+  const { poolData, status: poolStatus } = usePool();
   const rpcProvider = useRpcProvider();
   
   const [showWarning, setShowWarning] = useState(false);
@@ -458,12 +458,24 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         <div className="pool-detail-card">
           <h3 className="pool-title">rUSDY/USDC Liquidity Pool</h3>
           
-          {!curveReady ? (
+          {poolStatus.loading ? (
             <div className="pool-loading-state">
               <div className="status-spinner">
                 <div className="spinner"></div>
               </div>
               <p className="pool-loading-text">Loading pool data...</p>
+            </div>
+          ) : poolStatus.error ? (
+            <div className="pool-error-state">
+              <p className="pool-error-text">⚠️ {poolStatus.error}</p>
+              <p className="pool-error-hint">Please check your connection and refresh</p>
+            </div>
+          ) : !curveReady ? (
+            <div className="pool-loading-state">
+              <div className="status-spinner">
+                <div className="spinner"></div>
+              </div>
+              <p className="pool-loading-text">Initializing...</p>
             </div>
           ) : (
             <div className="pool-stats-grid">

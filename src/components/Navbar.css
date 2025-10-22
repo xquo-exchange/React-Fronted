@@ -121,6 +121,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .network-indicator {
@@ -273,12 +274,27 @@
   }
   
   .navbar-right {
-    gap: 12px;
+    gap: 8px;
+  }
+  
+  .wallet-connected {
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  
+  .network-indicator {
+    padding: 6px 12px;
+    font-size: 11px;
+    white-space: nowrap;
   }
   
   .wallet-button {
-    padding: 10px 18px;
-    font-size: 12px;
+    padding: 10px 14px;
+    font-size: 11px;
+  }
+  
+  .wallet-button.connected {
+    min-width: auto;
   }
   
   .wallet-dropdown {
@@ -295,21 +311,36 @@
 
 @media (max-width: 390px) {
   .navbar {
-    padding: 12px 12px;
+    padding: 10px 12px;
   }
   
   .navbar-logo-image {
     height: 22px;
   }
   
-  .wallet-button {
-    padding: 8px 14px;
-    font-size: 11px;
-    min-height: 40px;
+  .navbar-right {
+    gap: 6px;
   }
   
-  .navbar-right {
-    gap: 8px;
+  .wallet-connected {
+    gap: 6px;
+    max-width: 100%;
+  }
+  
+  .network-indicator {
+    padding: 5px 10px;
+    font-size: 10px;
+    min-height: 32px;
+  }
+  
+  .wallet-button {
+    padding: 7px 12px;
+    font-size: 10px;
+    min-height: 32px;
+  }
+  
+  .wallet-button.connected {
+    max-width: 100px;
   }
   
   .wallet-dropdown {
@@ -319,6 +350,6 @@
   
   .dropdown-item {
     padding: 12px 14px;
-    font-size: 13px;
+    font-size: 12px;
   }
 }

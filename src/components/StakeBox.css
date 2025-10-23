@@ -673,6 +673,68 @@
   }
 }
 
+@media (max-width: 320px) {
+  .stake-container {
+    padding: 10px;
+    gap: 14px;
+    max-width: 100%;
+  }
+  
+  .pool-detail-card {
+    padding: 10px;
+  }
+  
+  .pool-title {
+    font-size: 12px;
+  }
+  
+  .pool-stats-grid {
+    gap: 10px;
+  }
+  
+  .pool-stat-value {
+    font-size: 13px;
+  }
+  
+  .stake-mode-switch {
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .stake-mode-btn {
+    padding: 7px 8px;
+    font-size: 11px;
+    min-height: 34px;
+  }
+  
+  .strategy-btn {
+    padding: 8px;
+    font-size: 11px;
+  }
+  
+  .stake-input-box {
+    padding: 10px;
+  }
+  
+  .stake-input-box input {
+    font-size: 16px;
+  }
+  
+  .balance-row {
+    font-size: 10px;
+  }
+  
+  .action-button {
+    padding: 10px 16px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+  
+  .yield-item-value {
+    font-size: 13px;
+  }
+}
+
 /* Loading and Error States */
 .pool-loading-state {
   display: flex;

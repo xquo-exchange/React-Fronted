@@ -60,7 +60,7 @@ function AppContent() {
         <div className="main-container">
           <Sidebar activePage={activePage} setActivePage={setActivePage} />
           
-          <div className="center-content">
+          <div className="center-content" key={activePage} style={{animation: 'fadeInScale 0.3s ease-out'}}>
             {activePage === "swap" && (
               <SwapInterface 
                 onShowToast={showToast}
@@ -79,7 +79,7 @@ function AppContent() {
 
         {/* Only show pool stats on stake page */}
         {activePage === "stake" && (
-          <div className="pool-stats-container">
+          <div className="pool-stats-container" style={{animation: 'fadeInScale 0.3s ease-out'}}>
             <CurvePoolStatistics />
           </div>
         )}

@@ -18,7 +18,7 @@
   align-self: center;
   font-size: 22px;
   font-weight: 600;
-  color: #000;
+  color: #ffffff;
 }
 
 .connect-button {
@@ -38,7 +38,6 @@
   line-height: normal;
   border-radius: 8px;
   background: #171717;
-  margin-left: 1000px; 
 }
 
 .navbar-user {
@@ -351,5 +350,30 @@
   .dropdown-item {
     padding: 12px 14px;
     font-size: 12px;
+  }
+}
+
+@media (max-width: 320px) {
+  .navbar {
+    padding: 8px 10px;
+  }
+  
+  .navbar-logo-image {
+    height: 20px;
+  }
+  
+  .navbar-right {
+    gap: 4px;
+  }
+  
+  .wallet-button {
+    padding: 6px 10px;
+    font-size: 9px;
+    min-height: 28px;
+  }
+  
+  .wallet-dropdown {
+    right: 10px;
+    left: 10px;
   }
 }

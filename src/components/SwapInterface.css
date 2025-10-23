@@ -776,3 +776,44 @@
     font-size: 11px;
   }
 }
+
+@media (max-width: 320px) {
+  .swap-interface-container {
+    padding: 12px;
+    max-width: 100%;
+    border-radius: 14px;
+  }
+  
+  .swap-interface-title {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  
+  .swap-token-box {
+    padding: 10px;
+    margin-bottom: 4px;
+  }
+  
+  .swap-amount-input {
+    font-size: clamp(16px, 5vw, 20px);
+  }
+  
+  .swap-token-select-wrapper {
+    width: 90px;
+  }
+  
+  .swap-token-select {
+    padding: 6px 26px 6px 14px;
+    font-size: 11px;
+  }
+  
+  .slippage-preset-btn {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+  
+  .slippage-input {
+    width: 35px;
+    font-size: 11px;
+  }
+}

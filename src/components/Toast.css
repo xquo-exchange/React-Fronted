@@ -153,3 +153,29 @@
     min-height: 44px;
   }
 }
+
+@media (max-width: 320px) {
+  .toast {
+    left: 8px;
+    right: 8px;
+    top: 70px;
+    min-width: 280px;
+    max-width: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+  
+  .toast-message p {
+    font-size: 10px;
+  }
+  
+  .toast-icon {
+    font-size: 12px;
+  }
+  
+  .toast-close {
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 14px;
+  }
+}

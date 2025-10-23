@@ -202,3 +202,35 @@
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
 }
+
+@media (max-width: 320px) {
+  .swap-row-horizontal {
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  
+  .swap-section {
+    min-height: 130px;
+    min-width: 100%;
+    padding: 14px;
+  }
+  
+  .swap-amount {
+    font-size: 22px;
+  }
+  
+  .swap-label {
+    font-size: 12px;
+  }
+  
+  .swap-rate {
+    font-size: 11px;
+  }
+  
+  .swap-middle {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+  }
+}

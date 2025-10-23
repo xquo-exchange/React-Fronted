@@ -19,8 +19,8 @@
 }
 
 .filter-button {
-  height: 40px;
-  min-height: 40px;
+  height: 44px;
+  min-height: 44px;
   padding: 0 20px;
   flex-shrink: 0;
   border-radius: 8px;
@@ -154,5 +154,26 @@
   
   .custom-datepicker {
     font-size: 13px;
+  }
+}
+
+@media (max-width: 320px) {
+  .graph-box {
+    height: 240px;
+    padding: 8px;
+    border-radius: 10px;
+  }
+  
+  .filter-button {
+    font-size: 12px;
+    padding: 0 12px;
+    height: 38px;
+    min-height: 38px;
+  }
+  
+  .custom-datepicker {
+    font-size: 12px;
+    height: 38px;
+    min-height: 38px;
   }
 }

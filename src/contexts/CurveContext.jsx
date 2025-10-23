@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import curve from '@curvefi/api';
-import { useWallet } from '../hooks/useWallet';
 
 const CurveContext = createContext(null);
 
@@ -8,41 +7,48 @@ export function CurveProvider({ children }) {
   const [curveReady, setCurveReady] = useState(false);
   const [pools, setPools] = useState({});
   const [error, setError] = useState(null);
-  const initPromise = useRef(null);
-  const { getWalletConnectProvider, isConnected } = useWallet();
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // Only initialize Curve after wallet is connected
-    if (!isConnected) {
-      setCurveReady(false);
-      setPools({});
-      setError(null);
-      initPromise.current = null;
-      return;
-    }
+    // Only initialize once
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
 
-    if (initPromise.current) return;
-
-    initPromise.current = (async () => {
+    (async () => {
       try {
-        console.log('🔄 Initializing Curve (once)...');
+        console.log('🔄 CurveContext: Initializing Curve in RPC mode...');
         
-        const externalProvider = getWalletConnectProvider();
-        if (!externalProvider) {
-          throw new Error('WalletConnect provider not available');
+        // Use RPC mode for pool fetching and route calculation
+        const rpcUrls = [
+          'https://rpc.ankr.com/eth/8d154b0d09bc26ed179344de000e32fbad099ef3ea203b572ba8450d87b376dd',
+          'https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2',
+          'https://ethereum.publicnode.com'
+        ];
+
+        let rpcSuccess = false;
+        for (const rpcUrl of rpcUrls) {
+          try {
+            console.log(`🔄 CurveContext: Trying RPC: ${rpcUrl.substring(0, 50)}...`);
+            await curve.init('JsonRpc', { url: rpcUrl, chainId: 1 }, { gasPrice: 0 });
+            rpcSuccess = true;
+            console.log(`✅ CurveContext: RPC initialized with ${rpcUrl.substring(0, 50)}...`);
+            break;
+          } catch (err) {
+            console.warn(`⚠️ CurveContext: RPC failed for ${rpcUrl.substring(0, 50)}...:`, err.message);
+            continue;
+          }
         }
 
-        await curve.init(
-          'Web3',
-          { externalProvider, chainId: 1 },
-          { gasPrice: 0 }
-        );
+        if (!rpcSuccess) {
+          throw new Error('All RPC endpoints failed');
+        }
 
         // Fetch all pools once
+        console.log('🔄 CurveContext: Fetching pools...');
         await Promise.all([
-          curve.factory.fetchPools(),
-          curve.tricryptoFactory.fetchPools(),
-          curve.stableNgFactory.fetchPools()
+          curve.factory.fetchPools().catch(() => console.warn('Factory pools fetch failed')),
+          curve.tricryptoFactory.fetchPools().catch(() => console.warn('Tricrypto pools fetch failed')),
+          curve.stableNgFactory.fetchPools().catch(() => console.warn('StableNG pools fetch failed'))
         ]);
 
         // Cache important pools
@@ -55,13 +61,13 @@ export function CurveProvider({ children }) {
         });
 
         setCurveReady(true);
-        console.log('✅ Curve ready (shared)');
+        console.log('✅ CurveContext: Curve ready!');
       } catch (err) {
-        console.error('❌ Curve init failed:', err);
+        console.error('❌ CurveContext: Initialization failed:', err);
         setError(err.message);
       }
     })();
-  }, [isConnected, getWalletConnectProvider]);
+  }, []);
 
   const value = {
     curve,

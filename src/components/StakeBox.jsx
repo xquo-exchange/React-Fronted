@@ -7,12 +7,13 @@ import { usePool } from "../contexts/PoolContext";
 import { useRpcProvider } from "../contexts/RpcContext";
 import "./StakeBox.css";
 import { safePushToDataLayer } from "../curve/utility/gtm";
+import curve from '@curvefi/api';
 
 const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 
 const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
-  const { walletAddress: account, isConnected, connectWallet, provider: walletProvider } = useWallet();
-  const { curve, curveReady, pools } = useCurve();
+  const { walletAddress: account, isConnected, connectWallet, provider: walletProvider, getWalletConnectProvider } = useWallet();
+  const { curve: curveRpc, curveReady, pools } = useCurve();
   const { poolData, status: poolStatus } = usePool();
   const rpcProvider = useRpcProvider();
   
@@ -198,7 +199,23 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     setTxHash(null);
 
     try {
-      const rusdyPool = pools.usdcRusdy;
+      // ✅ Initialize Web3-mode Curve instance for transactions
+      setStatus("Initializing transaction mode...");
+      const externalProvider = getWalletConnectProvider();
+      if (!externalProvider) {
+        throw new Error('WalletConnect provider not available');
+      }
+
+      const curveWeb3 = curve;
+      await curveWeb3.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
+      
+      await Promise.all([
+        curveWeb3.factory.fetchPools(),
+        curveWeb3.tricryptoFactory.fetchPools(),
+        curveWeb3.stableNgFactory.fetchPools()
+      ]);
+
+      const rusdyPool = curveWeb3.getPool('factory-stable-ng-161');
       if (!rusdyPool) throw new Error("Pool not loaded");
 
       const signer = walletProvider.getSigner();
@@ -226,9 +243,8 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       setStatus("Depositing rUSDY...");
       
-      // ✅ USE CURVE.JS deposit() METHOD - Pass string "0" for USDC, amount string for rUSDY
-      // deposit([usdc_amount, rusdy_amount], slippage)
-      const depositTx = await rusdyPool.deposit([amount, 0], 0.1); // "0" rUSDY, USDC amount as string
+      // ✅ USE CURVE.JS deposit() METHOD - deposit([usdc_amount, rusdy_amount], slippage, {from: account})
+      const depositTx = await rusdyPool.deposit([0, amount], 0.1, { from: account }); // 0 USDC, amount rUSDY
       
       const txHash = typeof depositTx === 'string' ? depositTx : depositTx.hash;
       console.log("✅ Deposit tx submitted:", txHash);
@@ -321,14 +337,30 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     setTxHash(null);
 
     try {
-      const rusdyPool = pools.usdcRusdy;
+      // ✅ Initialize Web3-mode Curve instance for transactions
+      setStatus("Initializing transaction mode...");
+      const externalProvider = getWalletConnectProvider();
+      if (!externalProvider) {
+        throw new Error('WalletConnect provider not available');
+      }
+
+      const curveWeb3 = curve;
+      await curveWeb3.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
+      
+      await Promise.all([
+        curveWeb3.factory.fetchPools(),
+        curveWeb3.tricryptoFactory.fetchPools(),
+        curveWeb3.stableNgFactory.fetchPools()
+      ]);
+
+      const rusdyPool = curveWeb3.getPool('factory-stable-ng-161');
       if (!rusdyPool) throw new Error("Pool not loaded");
 
       setStatus("Withdrawing...");
       
-      // ✅ USE CURVE.JS withdraw() METHOD
-      const RUSDY_INDEX = 0;
-      const withdrawTx = await rusdyPool.withdrawOneCoin(amount, RUSDY_INDEX, 0.1);
+      // ✅ USE CURVE.JS withdraw() METHOD with {from: account}
+      const RUSDY_INDEX = 1; // rUSDY is index 1 in the pool
+      const withdrawTx = await rusdyPool.withdrawOneCoin(amount, RUSDY_INDEX, 0.1, { from: account });
 
       const txHash = typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash;
       console.log("✅ Withdrawal tx:", txHash);

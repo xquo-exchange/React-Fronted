@@ -5,6 +5,7 @@ import { useCurve } from "../contexts/CurveContext";
 import { useRpcProvider } from "../contexts/RpcContext";
 import "./SwapInterface.css";
 import { safePushToDataLayer } from "../curve/utility/gtm";
+import curve from '@curvefi/api';
 
 const TOKEN_REGISTRY = {
   ETH: { address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", decimals: 18, symbol: "ETH" },
@@ -18,8 +19,8 @@ const TOKEN_REGISTRY = {
 const CURVE_ROUTER_ADDRESS = "0xF0d4c12A5768D806021F80a262B4d39d26C58b8D";
 
 const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
-  const { walletAddress: account, provider: walletProvider } = useWallet();
-  const { curve, curveReady, pools } = useCurve();
+  const { walletAddress: account, provider: walletProvider, getWalletConnectProvider } = useWallet();
+  const { curve: curveRpc, curveReady, pools } = useCurve(); // Rename to curveRpc
   const provider = useRpcProvider();
 
   const [fromToken, setFromToken] = useState("ETH");
@@ -193,6 +194,27 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
 
     try {
+      // ✅ CRITICAL: Initialize Web3-mode Curve instance for transactions
+      setStatus("🔄 Initializing transaction mode...");
+      const externalProvider = getWalletConnectProvider();
+      if (!externalProvider) {
+        throw new Error('WalletConnect provider not available');
+      }
+
+      const curveWeb3 = curve; // Create new instance
+      await curveWeb3.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
+      console.log('✅ Web3 Curve instance ready for transactions');
+
+      // Fetch pools for the Web3 instance
+      await Promise.all([
+        curveWeb3.factory.fetchPools(),
+        curveWeb3.tricryptoFactory.fetchPools(),
+        curveWeb3.stableNgFactory.fetchPools()
+      ]);
+
+      const ethUsdcPoolWeb3 = curveWeb3.getPool('factory-tricrypto-3');
+      const usdcRusdyPoolWeb3 = curveWeb3.getPool('factory-stable-ng-161');
+
       const signer = walletProvider.getSigner();
 
       // Determine total steps
@@ -263,25 +285,21 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       let freshOutput = "0";
 
       if (toToken === "rUSDY") {
-        const usdcPool = pools.ethUsdc;
-        const rusdyPool = pools.usdcRusdy;
-
         if (fromToken === "ETH") {
-          const usdcOut = await usdcPool.swapExpected("ETH", "USDC", fromAmount);
-          freshOutput = await rusdyPool.swapExpected("USDC", TOKEN_REGISTRY.rUSDY.address, usdcOut);
+          const usdcOut = await ethUsdcPoolWeb3.swapExpected("ETH", "USDC", fromAmount);
+          freshOutput = await usdcRusdyPoolWeb3.swapExpected("USDC", TOKEN_REGISTRY.rUSDY.address, usdcOut);
         } else if (fromToken === "USDC") {
-          freshOutput = await rusdyPool.swapExpected("USDC", TOKEN_REGISTRY.rUSDY.address, fromAmount);
+          freshOutput = await usdcRusdyPoolWeb3.swapExpected("USDC", TOKEN_REGISTRY.rUSDY.address, fromAmount);
         }
       } else if (fromToken === "rUSDY") {
-        const rusdyPool = pools.usdcRusdy;
         if (toToken === "USDC") {
-          freshOutput = await rusdyPool.swapExpected(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount);
+          freshOutput = await usdcRusdyPoolWeb3.swapExpected(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount);
         } else if (toToken === "ETH") {
-          const usdcOut = await rusdyPool.swapExpected(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount);
-          freshOutput = await pools.ethUsdc.swapExpected("USDC", "ETH", usdcOut);
+          const usdcOut = await usdcRusdyPoolWeb3.swapExpected(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount);
+          freshOutput = await ethUsdcPoolWeb3.swapExpected("USDC", "ETH", usdcOut);
         }
       } else {
-        const result = await curve.router.getBestRouteAndOutput(
+        const result = await curveWeb3.router.getBestRouteAndOutput(
           TOKEN_REGISTRY[fromToken].address,
           TOKEN_REGISTRY[toToken].address,
           fromAmount
@@ -292,18 +310,15 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       const minOutput = parseFloat(freshOutput) * (1 - slippage / 100);
       console.log(`💱 Fresh quote: ${freshOutput} ${toToken} (min: ${minOutput.toFixed(6)}, slippage: ${slippage}%)`);
 
-      // ✅ SWAP PHASE - FIXED: Pass slippage as percentage
+      // ✅ SWAP PHASE - FIXED: Use Web3 pools for transactions
       if (toToken === "rUSDY") {
-        const usdcPool = pools.ethUsdc;
-        const rusdyPool = pools.usdcRusdy;
-
         if (fromToken === "ETH") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: ETH → USDC swap...`);
           setStatus("📝 Confirm swap in Wallet...");
 
-          // ✅ FIXED: Pass slippage as percentage (1.0 = 1%)
-          const tx1Hash = await usdcPool.swap("ETH", "USDC", fromAmount, slippage);
+          // ✅ Use Web3 pool instance
+          const tx1Hash = await ethUsdcPoolWeb3.swap("ETH", "USDC", fromAmount, slippage, { from: account });
           const hash1 = typeof tx1Hash === 'string' ? tx1Hash : tx1Hash.hash;
           setTxHash(hash1);
 
@@ -325,8 +340,8 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setStatus(`💱 Step 3/${steps}: USDC → rUSDY swap...`);
           setStatus("📝 Confirm second swap in Wallet...");
 
-          // ✅ FIXED: Pass slippage as percentage
-          txHash = await rusdyPool.swap("USDC", TOKEN_REGISTRY.rUSDY.address, usdcAmount, slippage);
+          // ✅ Use Web3 pool instance
+          txHash = await usdcRusdyPoolWeb3.swap("USDC", TOKEN_REGISTRY.rUSDY.address, usdcAmount, slippage, { from: account });
           const hash2 = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash2);
 
@@ -338,8 +353,8 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setStatus(`💱 Step 2/${steps}: USDC → rUSDY swap...`);
           setStatus("📝 Confirm swap in Wallet...");
 
-          // ✅ FIXED: Pass slippage as percentage
-          txHash = await rusdyPool.swap("USDC", TOKEN_REGISTRY.rUSDY.address, fromAmount, slippage);
+          // ✅ Use Web3 pool instance
+          txHash = await usdcRusdyPoolWeb3.swap("USDC", TOKEN_REGISTRY.rUSDY.address, fromAmount, slippage, { from: account });
           const hash = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash);
 
@@ -347,15 +362,13 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           receipt = await walletProvider.waitForTransaction(hash);
         }
       } else if (fromToken === "rUSDY") {
-        const rusdyPool = pools.usdcRusdy;
-
         if (toToken === "USDC") {
           setCurrentStep(2);
           setStatus(`💱 Step 2/${steps}: rUSDY → USDC swap...`);
           setStatus("📝 Confirm swap in Wallet...");
 
-          // ✅ FIXED: Pass slippage as percentage
-          txHash = await rusdyPool.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage);
+          // ✅ Use Web3 pool instance
+          txHash = await usdcRusdyPoolWeb3.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage, { from: account });
           const hash = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash);
 
@@ -367,8 +380,8 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setStatus(`💱 Step 2/${steps}: rUSDY → USDC swap...`);
           setStatus("📝 Confirm first swap in Wallet...");
 
-          // ✅ FIXED: Pass slippage as percentage
-          const tx1Hash = await rusdyPool.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage);
+          // ✅ Use Web3 pool instance
+          const tx1Hash = await usdcRusdyPoolWeb3.swap(TOKEN_REGISTRY.rUSDY.address, "USDC", fromAmount, slippage, { from: account });
           const hash1 = typeof tx1Hash === 'string' ? tx1Hash : tx1Hash.hash;
           setTxHash(hash1);
 
@@ -390,8 +403,8 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
           setStatus(`💱 Step 3/${steps}: USDC → ETH swap...`);
           setStatus("📝 Confirm second swap in Wallet...");
 
-          // ✅ FIXED: Pass slippage as percentage
-          txHash = await pools.ethUsdc.swap("USDC", "ETH", usdcAmount, slippage);
+          // ✅ Use Web3 pool instance
+          txHash = await ethUsdcPoolWeb3.swap("USDC", "ETH", usdcAmount, slippage, { from: account });
           const hash2 = typeof txHash === 'string' ? txHash : txHash.hash;
           setTxHash(hash2);
 
@@ -403,12 +416,13 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         setStatus(`💱 Step ${currentStep}/${steps}: ${fromToken} → ${toToken} swap...`);
         setStatus("📝 Confirm swap in Wallet...");
 
-        // ✅ FIXED: Pass slippage as percentage (not divided by 100)
-        txHash = await curve.router.swap(
+        // ✅ Use Web3 curve router instance
+        txHash = await curveWeb3.router.swap(
           TOKEN_REGISTRY[fromToken].address,
           TOKEN_REGISTRY[toToken].address,
           fromAmount,
-          slippage  // ✅ Pass 1.0 for 1%, not 0.01
+          slippage,
+          { from: account }
         );
         const hash = typeof txHash === 'string' ? txHash : txHash.hash;
         setTxHash(hash);

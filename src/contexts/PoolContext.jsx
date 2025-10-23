@@ -21,113 +21,145 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId = null;
 
     async function init() {
       try {
+        console.log('🔄 PoolContext: Starting initialization...');
         setStatus({ loading: true, error: null, lastUpdated: null });
 
-        // Add timeout to prevent indefinite loading
-        const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('Pool initialization timed out')), 30000);
-        });
+        // Load Curve API
+        console.log('🔄 PoolContext: Loading Curve API...');
+        const curveModule = await import('@curvefi/api');
+        const curveInstance = curveModule.default;
 
-        const initPromise = (async () => {
-          const curveModule = await import('@curvefi/api');
-          const curveInstance = curveModule.default;
+        if (!curveInstance) {
+          throw new Error('Failed to load Curve API');
+        }
 
-          if (!curveInstance) {
-            throw new Error('Failed to load Curve API');
-          }
+        // Initialize Curve
+        console.log('🔄 PoolContext: Initializing Curve...');
+        let mode = null;
+        let externalProvider = null;
 
-          let mode = null;
-          let externalProvider = null;
+        // Try WalletConnect first if connected
+        if (isConnected) {
+          console.log('🔄 PoolContext: Wallet connected, trying WalletConnect mode...');
+          externalProvider = getWalletConnectProvider();
+          
+          if (externalProvider) {
+            try {
+              // Check if we're on mainnet
+              const chainIdHex = await externalProvider.request?.({ method: 'eth_chainId' }).catch(() => null);
+              const onMainnet = chainIdHex === '0x1' || chainIdHex === 1 || chainIdHex === '1';
 
-          if (isConnected) {
-            externalProvider = getWalletConnectProvider();
-            
-            if (externalProvider) {
-              try {
-                const chainIdHex = await Promise.race([
-                  externalProvider.request?.({ method: 'eth_chainId' }),
-                  new Promise((_, reject) => setTimeout(() => reject(new Error('Chain ID request timeout')), 5000))
-                ]).catch(() => null);
-                
-                const onMainnet = chainIdHex === '0x1' || chainIdHex === 1 || chainIdHex === '1';
-
-                if (!onMainnet) {
-                  console.warn('Not on mainnet, falling back to RPC');
-                  mode = null;
-                } else {
-                  await curveInstance.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
-                  mode = 'web3';
-                }
-              } catch (err) {
-                console.warn('Web3 initialization failed, falling back to RPC:', err.message);
-                mode = null;
+              if (!onMainnet) {
+                throw new Error('Please switch to Ethereum Mainnet');
               }
+
+              // Initialize with WalletConnect provider
+              await curveInstance.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
+              mode = 'web3';
+              console.log('✅ PoolContext: WalletConnect mode initialized');
+            } catch (err) {
+              console.warn('⚠️ PoolContext: WalletConnect initialization failed, falling back to RPC:', err.message);
+              mode = null;
+            }
+          }
+        }
+
+        // Fallback to RPC mode with multiple endpoints
+        if (!mode) {
+          console.log('🔄 PoolContext: Using RPC mode...');
+          
+          const rpcUrls = [
+            'https://rpc.ankr.com/eth/8d154b0d09bc26ed179344de000e32fbad099ef3ea203b572ba8450d87b376dd',
+            'https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2',
+            'https://ethereum.publicnode.com',
+            'https://eth.llamarpc.com'
+          ];
+          
+          let rpcSuccess = false;
+          for (const rpcUrl of rpcUrls) {
+            try {
+              console.log(`🔄 PoolContext: Trying RPC: ${rpcUrl.substring(0, 50)}...`);
+              await curveInstance.init('JsonRpc', { url: rpcUrl, chainId: 1 }, { gasPrice: 0 });
+              mode = 'rpc';
+              rpcSuccess = true;
+              console.log(`✅ PoolContext: RPC mode initialized with ${rpcUrl.substring(0, 50)}...`);
+              break;
+            } catch (err) {
+              console.warn(`⚠️ PoolContext: RPC failed for ${rpcUrl.substring(0, 50)}...:`, err.message);
+              continue;
             }
           }
           
-          // Fallback to RPC mode if wallet not connected or Web3 init failed
-          if (!mode) {
-            const rpcUrl = import.meta.env.VITE_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/2dd1a437f34141deb299352ba4bbd0e2';
-            await curveInstance.init('JsonRpc', { url: rpcUrl, chainId: 1 }, { gasPrice: 0 });
-            mode = 'rpc';
+          if (!rpcSuccess) {
+            throw new Error('All RPC endpoints failed');
           }
+        }
 
-          if (!mounted) return;
-          setCurve(curveInstance);
+        if (!mounted) return;
+        setCurve(curveInstance);
 
+        // Fetch pools (don't fail if this doesn't work)
+        console.log('🔄 PoolContext: Fetching pools...');
+        try {
           await Promise.all([
-            curveInstance.factory.fetchPools().catch(() => {}),
-            curveInstance.tricryptoFactory.fetchPools().catch(() => {}),
-            curveInstance.stableNgFactory.fetchPools().catch(() => {}),
+            curveInstance.factory.fetchPools().catch(() => console.warn('Factory pools fetch failed')),
+            curveInstance.tricryptoFactory.fetchPools().catch(() => console.warn('Tricrypto pools fetch failed')),
+            curveInstance.stableNgFactory.fetchPools().catch(() => console.warn('StableNG pools fetch failed')),
           ]);
+          console.log('✅ Pool fetching completed');
+        } catch (err) {
+          console.warn('⚠️ Pool fetching had issues, but continuing:', err.message);
+        }
 
-          const poolInstance = curveInstance.getPool(poolId);
-          
-          if (!poolInstance) {
-            throw new Error(`Pool ${poolId} not found`);
-          }
+        // Get pool instance
+        console.log('🔄 PoolContext: Getting pool instance...');
+        const poolInstance = curveInstance.getPool(poolId);
+        
+        if (!poolInstance) {
+          throw new Error(`Pool ${poolId} not found`);
+        }
 
-          if (!mounted) return;
-          setPool(poolInstance);
+        if (!mounted) return;
+        setPool(poolInstance);
 
-          const [pd, wd] = await Promise.all([
-            getPoolDetails(poolInstance),
-            getWalletDetails(poolInstance, mode === 'web3' ? externalProvider : null),
-          ]);
-
-          if (!mounted) return;
-
-          if (!pd) {
-            throw new Error('Failed to fetch pool details');
-          }
-
-          setPoolData(pd);
-          setWalletData(wd);
-
-          return { success: true };
-        })();
-
-        await Promise.race([initPromise, timeoutPromise]);
-
-        if (timeoutId) clearTimeout(timeoutId);
+        // Fetch pool and wallet details
+        console.log('🔄 PoolContext: Fetching pool and wallet details...');
+        
+        const [pd, wd] = await Promise.all([
+          getPoolDetails(poolInstance).catch(err => {
+            console.warn('⚠️ Pool details fetch failed:', err.message);
+            return null;
+          }),
+          getWalletDetails(poolInstance, mode === 'web3' ? externalProvider : null).catch(err => {
+            console.warn('⚠️ Wallet details fetch failed:', err.message);
+            return null;
+          }),
+        ]);
 
         if (!mounted) return;
 
+        setPoolData(pd);
+        setWalletData(wd);
         setStatus({
           loading: false,
           error: null,
           lastUpdated: Date.now(),
         });
 
-        console.log('✅ Curve pool initialized successfully');
+        console.log('✅ PoolContext: Curve pool initialized successfully');
+        if (pd) {
+          console.log('📊 Pool data loaded:', {
+            usdTotal: pd.stats?.usdTotal,
+            vapy: pd.vapy,
+            tokens: pd.tokens?.length
+          });
+        }
 
       } catch (err) {
-        console.error('❌ Pool initialization failed:', err.message);
-        if (timeoutId) clearTimeout(timeoutId);
+        console.error('❌ PoolContext: Initialization failed:', err);
         if (!mounted) return;
 
         setStatus({
@@ -139,11 +171,11 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
     }
 
     init();
-    return () => { 
+
+    return () => {
       mounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [poolId, isConnected, getWalletConnectProvider]);
+  }, [isConnected, getWalletConnectProvider, poolId]);
 
   const value = useMemo(
     () => ({ curve, pool, poolData, walletData, status }),
@@ -154,7 +186,7 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
 }
 
 export function usePool() {
-  const ctx = useContext(PoolContext);
-  if (!ctx) throw new Error('usePool must be used inside <PoolProvider>');
-  return ctx;
+  const context = useContext(PoolContext);
+  if (!context) throw new Error('usePool must be used within PoolProvider');
+  return context;
 }

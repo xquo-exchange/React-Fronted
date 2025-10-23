@@ -41,7 +41,7 @@ body, #root {
   width: 100%;
   min-height: 100vh;
   position: relative;
-  padding-top: 80px;
+  padding-top: 0;
   gap: 60px;
   padding-left: 60px;
   padding-right: 60px;
@@ -62,7 +62,7 @@ body, #root {
     flex-direction: column;
     padding-left: 24px;
     padding-right: 24px;
-    padding-top: 80px;
+    padding-top: 0;
     gap: clamp(24px, 5vw, 40px);
   }
 }
@@ -71,7 +71,7 @@ body, #root {
   .app-container {
     padding-left: 20px;
     padding-right: 20px;
-    padding-top: 70px;
+    padding-top: 0;
     gap: 32px;
   }
 }
@@ -80,7 +80,7 @@ body, #root {
   .app-container {
     padding-left: 16px;
     padding-right: 16px;
-    padding-top: 65px;
+    padding-top: 0;
     gap: 24px;
   }
 }
@@ -89,7 +89,7 @@ body, #root {
   .app-container {
     padding-left: 16px;
     padding-right: 16px;
-    padding-top: 68px;
+    padding-top: 0;
     gap: 20px;
   }
   
@@ -102,7 +102,7 @@ body, #root {
   .app-container {
     padding-left: 12px;
     padding-right: 12px;
-    padding-top: 66px;
+    padding-top: 0;
     gap: 16px;
   }
   
@@ -115,7 +115,7 @@ body, #root {
   .app-container {
     padding-left: 10px;
     padding-right: 10px;
-    padding-top: 62px;
+    padding-top: 0;
     gap: 12px;
   }
   

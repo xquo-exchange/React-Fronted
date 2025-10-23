@@ -55,7 +55,7 @@ function AppContent() {
       <Navbar onShowToast={showToast} />
       
       <div className="content-wrapper">
-        <Header />
+      
         
         <div className="main-container">
           <Sidebar activePage={activePage} setActivePage={setActivePage} />

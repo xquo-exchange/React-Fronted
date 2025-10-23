@@ -90,6 +90,7 @@
 /* Small phones */
 @media (max-width: 480px) {
   .sidebar-box {
+    margin-top: 20px;
     padding: 6px;
     margin-top: 20px;
   }
@@ -113,6 +114,7 @@
 /* Tiny phones */
 @media (max-width: 390px) {
   .sidebar-box {
+    margin-top: 20px;
     padding: 5px;
     margin-top: 10px;
   }

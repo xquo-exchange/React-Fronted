@@ -13,7 +13,7 @@ const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 
 const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const { walletAddress: account, isConnected, connectWallet, provider: walletProvider, getWalletConnectProvider } = useWallet();
-  const { curve: curveRpc, curveReady, pools } = useCurve();
+  const { curve: curveRpc, curveReady, pools, curveWeb3, curveWeb3Ready, web3Error } = useCurve();
   const { poolData, status: poolStatus } = usePool();
   const rpcProvider = useRpcProvider();
   
@@ -189,6 +189,11 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       return;
     }
 
+    if (!curveWeb3Ready || !curveWeb3) {
+      onShowToast?.("error", "Transaction mode not ready. Please wait...");
+      return;
+    }
+
     if (!amount || parseFloat(amount) <= 0) {
       onShowToast?.("error", "Please enter an amount to deposit");
       return;
@@ -199,21 +204,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     setTxHash(null);
 
     try {
-      // ✅ Initialize Web3-mode Curve instance for transactions
-      setStatus("Initializing transaction mode...");
-      const externalProvider = getWalletConnectProvider();
-      if (!externalProvider) {
-        throw new Error('WalletConnect provider not available');
-      }
-
-      const curveWeb3 = curve;
-      await curveWeb3.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
-      
-      await Promise.all([
-        curveWeb3.factory.fetchPools(),
-        curveWeb3.tricryptoFactory.fetchPools(),
-        curveWeb3.stableNgFactory.fetchPools()
-      ]);
+      // ✅ Use pre-initialized Web3 Curve instance
+      setStatus("Using transaction mode...");
+      console.log('✅ Using pre-initialized Web3 Curve instance for deposit');
 
       const rusdyPool = curveWeb3.getPool('factory-stable-ng-161');
       if (!rusdyPool) throw new Error("Pool not loaded");
@@ -327,6 +320,11 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       return;
     }
 
+    if (!curveWeb3Ready || !curveWeb3) {
+      onShowToast?.("error", "Transaction mode not ready. Please wait...");
+      return;
+    }
+
     if (!amount || parseFloat(amount) <= 0) {
       onShowToast?.("error", "Please enter an amount to withdraw");
       return;
@@ -337,21 +335,9 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     setTxHash(null);
 
     try {
-      // ✅ Initialize Web3-mode Curve instance for transactions
-      setStatus("Initializing transaction mode...");
-      const externalProvider = getWalletConnectProvider();
-      if (!externalProvider) {
-        throw new Error('WalletConnect provider not available');
-      }
-
-      const curveWeb3 = curve;
-      await curveWeb3.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
-      
-      await Promise.all([
-        curveWeb3.factory.fetchPools(),
-        curveWeb3.tricryptoFactory.fetchPools(),
-        curveWeb3.stableNgFactory.fetchPools()
-      ]);
+      // ✅ Use pre-initialized Web3 Curve instance
+      setStatus("Using transaction mode...");
+      console.log('✅ Using pre-initialized Web3 Curve instance for withdrawal');
 
       const rusdyPool = curveWeb3.getPool('factory-stable-ng-161');
       if (!rusdyPool) throw new Error("Pool not loaded");
@@ -658,11 +644,13 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
         <button
           className="stake-action-button"
           onClick={handleActionClick}
-          disabled={isLoading || !amount || parseFloat(amount) <= 0 || !curveReady}
+          disabled={isLoading || !amount || parseFloat(amount) <= 0 || !curveReady || !curveWeb3Ready}
         >
           <span className="stake-button-text">
             {isLoading
               ? "PROCESSING..."
+              : !curveWeb3Ready
+              ? "INITIALIZING..."
               : mode === "stake"
               ? "DEPOSIT"
               : "WITHDRAW"}

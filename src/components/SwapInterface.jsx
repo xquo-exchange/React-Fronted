@@ -20,7 +20,7 @@ const CURVE_ROUTER_ADDRESS = "0xF0d4c12A5768D806021F80a262B4d39d26C58b8D";
 
 const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
   const { walletAddress: account, provider: walletProvider, getWalletConnectProvider } = useWallet();
-  const { curve: curveRpc, curveReady, pools } = useCurve(); // Rename to curveRpc
+  const { curve: curveRpc, curveReady, pools, curveWeb3, curveWeb3Ready, web3Error } = useCurve();
   const provider = useRpcProvider();
 
   const [fromToken, setFromToken] = useState("ETH");
@@ -176,11 +176,15 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       return;
     }
 
+    if (!curveWeb3Ready || !curveWeb3) {
+      onShowToast?.("error", "Transaction mode not ready. Please wait...");
+      return;
+    }
+
     setIsSwapping(true);
     setTxHash("");
 
     // 🔹 Fire GTM swap_initiated event
-
     safePushToDataLayer({
       event: "swap_initiated",
       from_token: fromToken,
@@ -192,25 +196,10 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
       slippage_percent: slippage,
     });
 
-
     try {
-      // ✅ CRITICAL: Initialize Web3-mode Curve instance for transactions
-      setStatus("🔄 Initializing transaction mode...");
-      const externalProvider = getWalletConnectProvider();
-      if (!externalProvider) {
-        throw new Error('WalletConnect provider not available');
-      }
-
-      const curveWeb3 = curve; // Create new instance
-      await curveWeb3.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
-      console.log('✅ Web3 Curve instance ready for transactions');
-
-      // Fetch pools for the Web3 instance
-      await Promise.all([
-        curveWeb3.factory.fetchPools(),
-        curveWeb3.tricryptoFactory.fetchPools(),
-        curveWeb3.stableNgFactory.fetchPools()
-      ]);
+      // ✅ Use pre-initialized Web3 Curve instance
+      setStatus("🔄 Using transaction mode...");
+      console.log('✅ Using pre-initialized Web3 Curve instance for transactions');
 
       const ethUsdcPoolWeb3 = curveWeb3.getPool('factory-tricrypto-3');
       const usdcRusdyPoolWeb3 = curveWeb3.getPool('factory-stable-ng-161');
@@ -717,6 +706,17 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
         </div>
       )}
 
+      {/* ✅ TRANSACTION MODE STATUS */}
+      {account && !curveWeb3Ready && (
+        <div className="swap-status-box">
+          <div className="swap-status-content">
+            <p className="swap-status-message">
+              🔄 Initializing transaction mode... {web3Error && `(${web3Error})`}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ✅ STATUS DISPLAY */}
       {status && (
         <div className="swap-status-box">
@@ -759,10 +759,10 @@ const SwapInterface = ({ onShowToast, onSwapSuccess }) => {
 
       <button
         onClick={executeSwap}
-        disabled={isSwapping || !hasCalculated || !account}
+        disabled={isSwapping || !hasCalculated || !account || !curveWeb3Ready}
         className="swap-execute-button"
       >
-        {isSwapping ? "TRADING..." : "TRADE"}
+        {isSwapping ? "TRADING..." : !curveWeb3Ready ? "INITIALIZING..." : "TRADE"}
       </button>
     </div>
   );

@@ -13,6 +13,7 @@
     "@curvefi/api": "^2.68.10",
     "@solana/web3.js": "^1.98.4",
     "@walletconnect/ethereum-provider": "^2.22.4",
+    "buffer": "^6.0.3",
     "date-fns": "^4.1.0",
     "ethers": "^5.8.0",
     "ogl": "^1.0.11",

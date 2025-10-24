@@ -110,22 +110,13 @@ export function CurveProvider({ children }) {
 
   // ✅ NEW: Auto-initialize Web3 when wallet provider becomes available
   useEffect(() => {
-    const checkForWalletProvider = () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        console.log('🔄 CurveContext: Detected wallet provider, initializing Web3 mode...');
-        initializeWeb3Curve(window.ethereum);
-      }
-    };
-
-    // Check immediately
-    checkForWalletProvider();
-
-    // Also listen for wallet connection events
+    // Listen for wallet connection events from WalletContext
     const handleWalletConnect = (event) => {
       const { provider } = event.detail || {};
       if (provider) {
         console.log('🔄 CurveContext: Wallet connected, initializing Web3 mode...');
-        setTimeout(() => initializeWeb3Curve(provider), 1000); // Delay to ensure provider is ready
+        // Give provider time to fully initialize
+        setTimeout(() => initializeWeb3Curve(provider), 500);
       }
     };
 

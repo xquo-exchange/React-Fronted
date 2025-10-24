@@ -14,6 +14,11 @@ function num(x) {
 
 export async function getPoolDetails(pool) {
   try {
+    // Check if pool is ready
+    if (!pool) {
+      throw new Error('Pool instance is not available');
+    }
+
     // Basic info
     const name = safe(() => pool.name, 'Curve Pool');
     const poolAddress = safe(() => pool.address, null);
@@ -25,33 +30,45 @@ export async function getPoolDetails(pool) {
     let apyWeekly = null;
     let tokens = [];
 
-    // Get TVL
+    // Get TVL - Check if pool.stats exists and has the method
     if (pool.stats && typeof pool.stats.totalLiquidity === 'function') {
-      tvl = num(await pool.stats.totalLiquidity());
-    }
-
-    // Get Volume
-    if (pool.stats && typeof pool.stats.volume === 'function') {
-      const result = await pool.stats.volume();
-      if (result && typeof result === 'object') {
-        volume24h = num(result.day || result.daily || result['24h']);
-      } else {
-        volume24h = num(result);
+      try {
+        tvl = num(await pool.stats.totalLiquidity());
+      } catch (e) {
+        console.warn('⚠️ Could not fetch TVL:', e.message);
       }
     }
 
-    // Get APY
-    if (pool.stats && typeof pool.stats.baseApy === 'function') {
-      const result = await pool.stats.baseApy();
-      if (result && typeof result === 'object') {
-        apyDaily = num(result.day);
-        apyWeekly = num(result.week);
-      } else {
-        const apyValue = num(result);
-        if (apyValue) {
-          apyDaily = apyValue / 365;
-          apyWeekly = (apyValue / 365) * 7;
+    // Get Volume - Handle missing pool.stats
+    if (pool.stats && typeof pool.stats.volume === 'function') {
+      try {
+        const result = await pool.stats.volume();
+        if (result && typeof result === 'object') {
+          volume24h = num(result.day || result.daily || result['24h']);
+        } else {
+          volume24h = num(result);
         }
+      } catch (e) {
+        console.warn('⚠️ Could not fetch volume:', e.message);
+      }
+    }
+
+    // Get APY - Handle missing pool.stats
+    if (pool.stats && typeof pool.stats.baseApy === 'function') {
+      try {
+        const result = await pool.stats.baseApy();
+        if (result && typeof result === 'object') {
+          apyDaily = num(result.day);
+          apyWeekly = num(result.week);
+        } else {
+          const apyValue = num(result);
+          if (apyValue) {
+            apyDaily = apyValue / 365;
+            apyWeekly = (apyValue / 365) * 7;
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Could not fetch APY:', e.message);
       }
     }
 
@@ -60,17 +77,25 @@ export async function getPoolDetails(pool) {
       let balances = [];
       let prices = [];
 
-      try {
-        balances = (await pool.stats.underlyingBalances()).map(b => num(b));
-      } catch {}
+      // Try to get balances if stats available
+      if (pool.stats && typeof pool.stats.underlyingBalances === 'function') {
+        try {
+          balances = (await pool.stats.underlyingBalances()).map(b => num(b));
+        } catch (e) {
+          console.warn('⚠️ Could not fetch balances:', e.message);
+        }
+      }
 
+      // Try to get prices
       try {
         if (pool.underlyingCoinPrices && Array.isArray(pool.underlyingCoinPrices)) {
           prices = pool.underlyingCoinPrices.map(p => num(p));
         } else if (typeof pool.underlyingCoinPrices === 'function') {
           prices = (await pool.underlyingCoinPrices()).map(p => num(p));
         }
-      } catch {}
+      } catch (e) {
+        console.warn('⚠️ Could not fetch prices:', e.message);
+      }
 
       const totalValue = balances.reduce((sum, bal, i) => {
         return sum + (bal || 0) * (prices[i] || 1);
@@ -91,31 +116,52 @@ export async function getPoolDetails(pool) {
     let adminFee = null;
     let virtualPrice = null;
 
+    // Try parameters method first (if pool.stats available)
     if (pool.stats && typeof pool.stats.parameters === 'function') {
-      const params = await pool.stats.parameters();
-      if (params) {
-        fee = num(params.fee);
-        adminFee = num(params.admin_fee || params.adminFee);
-        virtualPrice = num(params.virtual_price || params.virtualPrice);
+      try {
+        const params = await pool.stats.parameters();
+        if (params) {
+          fee = num(params.fee);
+          adminFee = num(params.admin_fee || params.adminFee);
+          virtualPrice = num(params.virtual_price || params.virtualPrice);
+        }
+      } catch (e) {
+        console.warn('⚠️ Could not fetch parameters from stats:', e.message);
       }
     }
 
-    // Fallback fee methods
+    // Fallback fee methods (if stats method didn't work)
     if (fee === null || adminFee === null) {
       if (typeof pool.fee === 'function') {
-        fee = num(await pool.fee()) / 10000000000;
+        try {
+          fee = num(await pool.fee()) / 10000000000;
+        } catch (e) {
+          console.warn('⚠️ Could not fetch fee:', e.message);
+        }
       }
       if (typeof pool.adminFee === 'function') {
-        adminFee = num(await pool.adminFee()) / 10000000000;
+        try {
+          adminFee = num(await pool.adminFee()) / 10000000000;
+        } catch (e) {
+          console.warn('⚠️ Could not fetch admin fee:', e.message);
+        }
       }
     }
 
     // Fallback virtual price
     if (virtualPrice === null) {
       if (typeof pool.get_virtual_price === 'function') {
-        virtualPrice = num(await pool.get_virtual_price()) / 1e18;
+        try {
+          virtualPrice = num(await pool.get_virtual_price()) / 1e18;
+        } catch (e) {
+          console.warn('⚠️ Could not fetch virtual price via get_virtual_price:', e.message);
+        }
       } else if (typeof pool.virtualPrice === 'function') {
-        virtualPrice = num(await pool.virtualPrice()) / 1e18;
+        try {
+          virtualPrice = num(await pool.virtualPrice()) / 1e18;
+        } catch (e) {
+          console.warn('⚠️ Could not fetch virtual price via virtualPrice:', e.message);
+        }
       }
     }
 

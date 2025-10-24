@@ -44,19 +44,33 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
         if (!mounted) return;
         setPool(poolInstance);
 
-        // Fetch pool and wallet details
+        // Fetch pool and wallet details (with retry for timing issues)
         console.log('🔄 PoolContext: Fetching pool and wallet details...');
         
-        const [pd, wd] = await Promise.all([
-          getPoolDetails(poolInstance).catch(err => {
-            console.warn('⚠️ Pool details fetch failed:', err.message);
-            return null;
-          }),
-          getWalletDetails(poolInstance, null).catch(err => {
-            console.warn('⚠️ Wallet details fetch failed:', err.message);
-            return null;
-          }),
-        ]);
+        let pd = null;
+        let wd = null;
+        let retries = 3;
+        
+        while (retries > 0) {
+          try {
+            [pd, wd] = await Promise.all([
+              getPoolDetails(poolInstance),
+              getWalletDetails(poolInstance, null),
+            ]);
+            break; // Success, exit retry loop
+          } catch (err) {
+            retries--;
+            if (retries > 0) {
+              console.warn(`⚠️ Pool details fetch failed, retrying (${retries} left):`, err.message);
+              await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+            } else {
+              console.warn('⚠️ Pool details fetch failed after retries:', err.message);
+              // Continue anyway with null values
+              pd = null;
+              wd = null;
+            }
+          }
+        }
 
         if (!mounted) return;
 

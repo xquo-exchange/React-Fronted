@@ -236,8 +236,8 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
 
       setStatus("Depositing rUSDY...");
       
-      // ✅ USE CURVE.JS deposit() METHOD - deposit([usdc_amount, rusdy_amount], slippage, {from: account})
-      const depositTx = await rusdyPool.deposit([0, amount], 0.1, { from: account }); // 0 USDC, amount rUSDY
+      // ✅ USE CURVE.JS deposit() METHOD - deposit([rusdy_amount, usdc_amount], slippage, {from: account})
+      const depositTx = await rusdyPool.deposit([amount, 0], 0.1, { from: account }); // amount rUSDY, 0 USDC
       
       const txHash = typeof depositTx === 'string' ? depositTx : depositTx.hash;
       console.log("✅ Deposit tx submitted:", txHash);
@@ -345,7 +345,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
       setStatus("Withdrawing...");
       
       // ✅ USE CURVE.JS withdraw() METHOD with {from: account}
-      const RUSDY_INDEX = 1; // rUSDY is index 1 in the pool
+      const RUSDY_INDEX = 0; // rUSDY is index 0 in the pool
       const withdrawTx = await rusdyPool.withdrawOneCoin(amount, RUSDY_INDEX, 0.1, { from: account });
 
       const txHash = typeof withdrawTx === 'string' ? withdrawTx : withdrawTx.hash;

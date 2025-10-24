@@ -94,10 +94,11 @@ export const WalletProvider = ({ children }) => {
 
       console.log('✅ Wallet connected:', address);
       
-      // ✅ Dispatch custom event for CurveContext to listen
-      window.dispatchEvent(new CustomEvent('walletConnected', { 
-        detail: { provider: wcProvider, address } 
+      // ✅ Dispatch event so CurveContext knows wallet is connected
+      window.dispatchEvent(new CustomEvent('walletConnected', {
+        detail: { provider: wcProvider, address }
       }));
+      
       return {
         success: true,
         address,

@@ -123,3 +123,44 @@ body, #root {
     gap: 16px;
   }
 }
+
+/* Pool Statistics Container Spacing */
+.pool-stats-container {
+  margin-top: 40px;
+}
+
+@media (max-width: 1024px) {
+  .pool-stats-container {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pool-stats-container {
+    margin-top: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pool-stats-container {
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pool-stats-container {
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 390px) {
+  .pool-stats-container {
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 320px) {
+  .pool-stats-container {
+    margin-top: 20px;
+  }
+}

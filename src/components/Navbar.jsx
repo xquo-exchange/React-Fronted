@@ -87,15 +87,25 @@ const Navbar = ({ onShowToast }) => {
               style={{ cursor: !isMainnet ? 'pointer' : 'default' }}
               title={!isMainnet ? "Click to switch to Ethereum Mainnet" : "Connected to Ethereum Mainnet"}
             >
-              {isMainnet ? '🟢' : '⚠️'} {getNetworkName(chainId)}
+              {isMainnet ? '🟢' : '⚠️'} <span className="network-text">{getNetworkName(chainId)}</span>
             </div>
 
+            {/* Desktop wallet button */}
             <button
-              className="wallet-button connected"
+              className="wallet-button connected desktop-only"
               onClick={() => setShowDropdown(!showDropdown)}
             >
               <span className="wallet-indicator"></span>
               {truncateAddress(walletAddress)}
+            </button>
+
+            {/* Mobile logout button */}
+            <button
+              className="wallet-button connected mobile-only logout-btn"
+              onClick={handleDisconnect}
+              title="Disconnect wallet"
+            >
+              🚪
             </button>
 
             {showDropdown && (

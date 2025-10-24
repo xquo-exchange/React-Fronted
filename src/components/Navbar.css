@@ -189,7 +189,24 @@
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(20px);
   overflow: hidden;
-  z-index: 1000;
+  z-index: 99999;
+}
+
+/* Desktop vs Mobile visibility */
+.desktop-only {
+  display: flex;
+}
+
+.mobile-only {
+  display: none;
+}
+
+.logout-btn {
+  display: none !important;
+}
+
+.network-text {
+  display: inline;
 }
 
 .dropdown-info {
@@ -247,15 +264,49 @@
   .navbar-logo-image {
     height: 28px;
   }
+  
+  .network-text {
+    display: inline;
+  }
+  
+  .desktop-only {
+    display: none;
+  }
+  
+  .mobile-only {
+    display: flex;
+  }
+  
+  .logout-btn {
+    display: none !important;
+  }
 }
 
 @media (max-width: 640px) {
+
+  .wallet-button.connected.desktop-only {
+    display: none;
+
+  }
+
   .navbar {
     padding: 14px 20px;
   }
   
   .navbar-logo-image {
     height: 26px;
+  }
+  
+  .desktop-only {
+    display: none;
+  }
+  
+  .mobile-only {
+    display: flex;
+  }
+  
+  .logout-btn {
+    display: flex !important;
   }
   
   .wallet-dropdown {
@@ -289,6 +340,10 @@
     white-space: nowrap;
   }
   
+  .network-text {
+    display: inline;
+  }
+  
   .wallet-button {
     padding: 10px 14px;
     font-size: 11px;
@@ -296,6 +351,13 @@
   
   .wallet-button.connected {
     min-width: auto;
+  }
+  
+  .wallet-button.logout-btn {
+    font-size: 16px;
+    padding: 8px 10px;
+    min-height: 36px;
+    min-width: 36px;
   }
   
   .wallet-dropdown {
@@ -308,9 +370,17 @@
     padding: 6px 12px;
     font-size: 11px;
   }
+
+  .wallet-button.connected.desktop-only {
+    display: none;
+  }
 }
 
 @media (max-width: 390px) {
+  .wallet-button.connected.desktop-only {
+    display: none;
+  }
+
   .navbar {
     padding: 14px 12px;
     min-height: 66px;
@@ -335,10 +405,21 @@
     min-height: 32px;
   }
   
+  .network-text {
+    display: none;
+  }
+  
   .wallet-button {
     padding: 7px 12px;
     font-size: 10px;
     min-height: 32px;
+  }
+  
+  .wallet-button.logout-btn {
+    font-size: 14px;
+    padding: 6px 8px;
+    min-height: 32px;
+    min-width: 32px;
   }
   
   .wallet-button.connected {

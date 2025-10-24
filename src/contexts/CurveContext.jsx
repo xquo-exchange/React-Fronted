@@ -84,27 +84,64 @@ export function CurveProvider({ children }) {
       console.log('🔄 CurveContext: Initializing Web3 transaction mode...');
       setWeb3Error(null);
       
+      // ✅ Wait for provider to be ready before using it
+      console.log('🔄 CurveContext: Validating provider readiness...');
+      let providerReady = false;
+      const maxAttempts = 10;
+      
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          // Test if provider is ready by getting network
+          await externalProvider.request({ method: 'eth_chainId' });
+          providerReady = true;
+          console.log('✅ CurveContext: Provider is ready');
+          break;
+        } catch (e) {
+          if (attempt < maxAttempts - 1) {
+            console.warn(`⏳ CurveContext: Provider not ready yet, attempt ${attempt + 1}/${maxAttempts}`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        }
+      }
+      
+      if (!providerReady) {
+        throw new Error('Provider never became ready after max attempts');
+      }
+      
       // Create a separate Web3 Curve instance for transactions
-      const web3Instance = curve; // Use the same instance but reinitialize
+      const web3Instance = curve;
+      console.log('🔄 CurveContext: Initializing Curve in Web3 mode...');
       await web3Instance.init('Web3', { externalProvider, chainId: 1 }, { gasPrice: 0 });
       
       console.log('✅ CurveContext: Web3 Curve instance initialized');
       
-      // Fetch pools for the Web3 instance
-      await Promise.all([
-        web3Instance.factory.fetchPools().catch(() => console.warn('Web3 Factory pools fetch failed')),
-        web3Instance.tricryptoFactory.fetchPools().catch(() => console.warn('Web3 Tricrypto pools fetch failed')),
-        web3Instance.stableNgFactory.fetchPools().catch(() => console.warn('Web3 StableNG pools fetch failed'))
+      // Fetch pools for the Web3 instance with better error handling
+      console.log('🔄 CurveContext: Fetching Web3 pools...');
+      const poolResults = await Promise.allSettled([
+        web3Instance.factory.fetchPools(),
+        web3Instance.tricryptoFactory.fetchPools(),
+        web3Instance.stableNgFactory.fetchPools()
       ]);
+      
+      // Log detailed results
+      poolResults.forEach((result, index) => {
+        const poolType = ['factory', 'tricrypto', 'stableNG'][index];
+        if (result.status === 'fulfilled') {
+          console.log(`✅ Web3 ${poolType} pools fetched`);
+        } else {
+          console.warn(`⚠️ Web3 ${poolType} pools fetch failed:`, result.reason?.message);
+        }
+      });
       
       setCurveWeb3(web3Instance);
       setCurveWeb3Ready(true);
       console.log('✅ CurveContext: Web3 transaction mode ready!');
       
     } catch (err) {
-      console.error('❌ CurveContext: Web3 initialization failed:', err);
+      console.error('❌ CurveContext: Web3 initialization failed:', err.message || err);
       setWeb3Error(err.message);
-      web3Initialized.current = false; // Allow retry
+      web3Initialized.current = false; // Allow retry on next wallet connection
+      console.log('🔄 CurveContext: Web3 init reset, will retry on next wallet change');
     }
   };
 
@@ -114,9 +151,10 @@ export function CurveProvider({ children }) {
     const handleWalletConnect = (event) => {
       const { provider } = event.detail || {};
       if (provider) {
-        console.log('🔄 CurveContext: Wallet connected, initializing Web3 mode...');
-        // Give provider time to fully initialize
-        setTimeout(() => initializeWeb3Curve(provider), 500);
+        console.log('🔄 CurveContext: Wallet connected event received, preparing Web3 mode...');
+        // Provider readiness check is now inside initializeWeb3Curve
+        // No arbitrary timeout needed
+        initializeWeb3Curve(provider);
       }
     };
 

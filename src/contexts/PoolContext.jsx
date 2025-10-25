@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { getPoolDetails } from '../curve/utility/PoolInfo.js';
 import { getWalletDetails } from '../curve/utility/WalletInfo.js';
 import { useCurve } from './CurveContext';
+import { useWallet } from '../hooks/useWallet';
 
 const PoolContext = createContext(null);
 
@@ -18,6 +19,9 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
 
   // Use curve from CurveContext instead of initializing our own
   const { curve, curveReady } = useCurve();
+  
+  // ✅ Get wallet provider from WalletContext
+  const { isConnected, getWalletConnectProvider } = useWallet();
 
   useEffect(() => {
     // Wait for CurveContext to initialize
@@ -47,6 +51,10 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
         // Fetch pool and wallet details (with retry for timing issues)
         console.log('🔄 PoolContext: Fetching pool and wallet details...');
         
+        // ✅ Get the wallet provider if wallet is connected
+        const walletProvider = isConnected ? getWalletConnectProvider() : null;
+        console.log('🔍 PoolContext: Wallet connected:', isConnected, 'Provider:', !!walletProvider);
+        
         let pd = null;
         let wd = null;
         let retries = 3;
@@ -55,7 +63,7 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
           try {
             [pd, wd] = await Promise.all([
               getPoolDetails(poolInstance),
-              getWalletDetails(poolInstance, null),
+              getWalletDetails(poolInstance, walletProvider),
             ]);
             break; // Success, exit retry loop
           } catch (err) {
@@ -108,7 +116,7 @@ export function PoolProvider({ children, poolId = 'factory-stable-ng-161' }) {
     return () => {
       mounted = false;
     };
-  }, [curve, curveReady, poolId]);
+  }, [curve, curveReady, poolId, isConnected, getWalletConnectProvider]);
 
   const value = useMemo(
     () => ({ curve, pool, poolData, walletData, status }),

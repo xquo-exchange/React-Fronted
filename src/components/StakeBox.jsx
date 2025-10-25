@@ -14,7 +14,7 @@ const RUSDY_ADDRESS = "0xaf37c1167910ebc994e266949387d2c7c326b879";
 const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
   const { walletAddress: account, isConnected, connectWallet, provider: walletProvider, getWalletConnectProvider } = useWallet();
   const { curve: curveRpc, curveReady, pools, curveWeb3, curveWeb3Ready, web3Error } = useCurve();
-  const { poolData, status: poolStatus } = usePool();
+  const { poolData, walletData, status: poolStatus } = usePool();
   const rpcProvider = useRpcProvider();
   
   const [showWarning, setShowWarning] = useState(false);
@@ -48,7 +48,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
     baseApy: BASE_APY,
     weeklyVapy: parseFloat(poolData?.vapy?.weekly || "0"),
     enhancedApy: getEnhancedAPY(),
-    userPositionUSD: "0"
+    userPositionUSD: walletData?.usdBalance || "0"
   };
 
   useEffect(() => {
@@ -503,7 +503,7 @@ const StakeBox = ({ onShowToast, prefillAmount, onPrefillUsed }) => {
               </div>
               <div className="pool-stat">
                 <span className="pool-stat-label">Your Position</span>
-                <span className="pool-stat-value">${poolStats.userPositionUSD}</span>
+                <span className="pool-stat-value">${parseFloat(poolStats.userPositionUSD || 0).toFixed(2)}</span>
               </div>
               <div className="pool-stat">
                 <span className="pool-stat-label">Base APY</span>
